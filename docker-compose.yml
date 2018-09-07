@@ -1,0 +1,31 @@
+version: '3'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      - LOG_SHORT_TIME=true
+      - LOG_LEVEL=debug
+      - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+    ports:
+      - 5000:5000
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    environment:
+      - LOG_SHORT_TIME=true
+      - LOG_LEVEL=debug
+      - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672

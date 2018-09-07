@@ -1,0 +1,66 @@
+environment:
+  - WORKSPACE=/go/src/github.com/efritz/ijci
+  - GO_IMAGE=golang:1.11
+
+workspace: ${WORKSPACE}
+
+import:
+  files: '*'
+
+export:
+  files:
+    - vendor
+    - api:ijci-api
+    - agent:ijci-agent
+
+tasks:
+  install-vendors:
+    image: ${GO_IMAGE}
+    script: |
+      if [ ! -d vendor ]; then
+        go get -u github.com/golang/dep/cmd/dep
+        dep ensure
+      fi
+
+  go-build:
+    image: ${GO_IMAGE}
+    script: go build ./cmd/${APP_NAME}
+    environment:
+      - GOOS=linux
+      - GOARCH=amd64
+      - CGO_ENABLED=0
+
+  build-image:
+    type: build
+    dockerfile: Dockerfile.${APP_NAME}
+    tags:
+      - ijci-${APP_NAME}:master-latest
+
+plans:
+  build:
+    stages:
+      - name: deps
+        tasks:
+          - install-vendors
+      - name: build
+        tasks:
+          - name: go-build
+            environment: APP_NAME=api
+          - name: go-build
+            environment: APP_NAME=agent
+        parallel: true
+
+  build-images:
+    stages:
+      - name: build images
+        tasks:
+          - name: build-image
+            environment: APP_NAME=api
+          - name: build-image
+            environment: APP_NAME=agent
+        parallel: true
+
+metaplans:
+  default:
+    - build
+    - build-images

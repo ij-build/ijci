@@ -1,0 +1,3 @@
+FROM alpine:3.8
+CMD ["./ijci-agent"]
+COPY ijci-agent /

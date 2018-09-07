@@ -1,0 +1,19 @@
+[[constraint]]
+  branch = "master"
+  name = "github.com/efritz/chevron"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/efritz/nacelle"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/efritz/response"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/streadway/amqp"
+
+[prune]
+  go-tests = true
+  unused-packages = true
