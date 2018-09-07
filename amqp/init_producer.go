@@ -1,8 +1,6 @@
 package amqp
 
 import (
-	"fmt"
-
 	"github.com/efritz/nacelle"
 )
 
@@ -26,32 +24,32 @@ func (pi *ProducerInitializer) Init(config nacelle.Config) error {
 	}
 
 	var (
-		exchange     = producerConfig.Exchange
-		exchangeType = producerConfig.ExchangeType
-		routingKey   = producerConfig.RoutingKey
-		uri          = producerConfig.URI
+		exchange   = producerConfig.Exchange
+		routingKey = producerConfig.RoutingKey
+		uri        = producerConfig.URI
 	)
 
-	conn, channel, err := makeChannelAndEnsureExchange(
-		uri,
-		exchange,
-		exchangeType,
-		pi.Logger,
-	)
-
+	conn, channel, err := makeChannel(uri, pi.Logger)
 	if err != nil {
 		return err
 	}
 
-	pi.Logger.Debug("Putting AMQP channel into confirm mode")
+	if err := makeExchange(channel, exchange, pi.Logger); err != nil {
+		conn.Close()
+		return err
+	}
 
-	if err := channel.Confirm(false); err != nil {
-		return fmt.Errorf("failed to put channel into confirm mode (%s)", err.Error())
+	confirms, returns, err := setupConfirms(channel, pi.Logger)
+	if err != nil {
+		conn.Close()
+		return err
 	}
 
 	return pi.Container.Set(ServiceNameProducer, NewProducer(
 		conn,
 		channel,
+		confirms,
+		returns,
 		exchange,
 		routingKey,
 	))

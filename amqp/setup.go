@@ -7,10 +7,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func makeChannelAndEnsureExchange(
+func makeChannel(
 	uri string,
-	exchange string,
-	exchangeType string,
 	logger nacelle.Logger,
 ) (*amqp.Connection, *amqp.Channel, error) {
 	logger.Debug("Dialing AMQP broker")
@@ -20,32 +18,47 @@ func makeChannelAndEnsureExchange(
 		return nil, nil, fmt.Errorf("failed to connect to amqp broker (%s)", err.Error())
 	}
 
-
 	logger.Debug("Getting AMQP channel")
 
 	channel, err := conn.Channel()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create channel (%s)", err.Error())
+		conn.Close()
+
+		return nil, nil, fmt.Errorf(
+			"failed to create channel (%s)",
+			err.Error(),
+		)
 	}
 
+	return conn, channel, nil
+}
+
+func makeExchange(
+	channel *amqp.Channel,
+	exchange string,
+	logger nacelle.Logger,
+) error {
 	logger.Debug("Declaring AMQP exchange '%s'", exchange)
 
 	if err := channel.ExchangeDeclare(
 		exchange,
-		exchangeType,
+		"direct",
 		true,  // durable
 		false, // delete when complete
 		false, // internal
 		false, // noWait
 		nil,   // arguments
 	); err != nil {
-		return nil, nil, fmt.Errorf("failed to declare exchange (%s)", err.Error())
+		return fmt.Errorf(
+			"failed to declare exchange (%s)",
+			err.Error(),
+		)
 	}
 
-	return conn, channel, nil
+	return nil
 }
 
-func makeAndBindQueue(
+func makeBoundQueue(
 	channel *amqp.Channel,
 	exchange string,
 	queueName string,
@@ -84,4 +97,23 @@ func makeAndBindQueue(
 	}
 
 	return nil
+}
+
+func setupConfirms(
+	channel *amqp.Channel,
+	logger nacelle.Logger,
+) (<-chan amqp.Confirmation, <-chan amqp.Return, error) {
+	logger.Debug("Putting AMQP channel into confirm mode")
+
+	if err := channel.Confirm(false); err != nil {
+		return nil, nil, fmt.Errorf(
+			"failed to put channel into confirm mode (%s)",
+			err.Error(),
+		)
+	}
+
+	confirms := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	returns := channel.NotifyReturn(make(chan amqp.Return, 1))
+
+	return confirms, returns, nil
 }

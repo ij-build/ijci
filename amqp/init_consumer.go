@@ -26,32 +26,25 @@ func (ci *ConsumerInitializer) Init(config nacelle.Config) error {
 	}
 
 	var (
-		consumerTag  = consumerConfig.ConsumerTag
-		exchange     = consumerConfig.Exchange
-		exchangeType = consumerConfig.ExchangeType
-		queueName    = consumerConfig.QueueName
-		routingKey   = consumerConfig.RoutingKey
-		uri          = consumerConfig.URI
+		consumerTag = consumerConfig.ConsumerTag
+		exchange    = consumerConfig.Exchange
+		queueName   = consumerConfig.QueueName
+		routingKey  = consumerConfig.RoutingKey
+		uri         = consumerConfig.URI
 	)
 
-	conn, channel, err := makeChannelAndEnsureExchange(
-		uri,
-		exchange,
-		exchangeType,
-		ci.Logger,
-	)
-
+	conn, channel, err := makeChannel(uri, ci.Logger)
 	if err != nil {
 		return err
 	}
 
-	if err := makeAndBindQueue(
-		channel,
-		exchange,
-		queueName,
-		routingKey,
-		ci.Logger,
-	); err != nil {
+	if err := makeExchange(channel, exchange, ci.Logger); err != nil {
+		conn.Close()
+		return err
+	}
+
+	if err := makeBoundQueue(channel, exchange, queueName, routingKey, ci.Logger); err != nil {
+		conn.Close()
 		return err
 	}
 
@@ -70,6 +63,7 @@ func (ci *ConsumerInitializer) Init(config nacelle.Config) error {
 	)
 
 	if err != nil {
+		conn.Close()
 		return fmt.Errorf("failed to get deliveries from queue (%s)", err.Error())
 	}
 

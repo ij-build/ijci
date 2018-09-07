@@ -2,37 +2,37 @@ package amqp
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/streadway/amqp"
 )
 
 type Producer struct {
-	conn          *amqp.Connection
-	channel       *amqp.Channel
-	confirmations chan amqp.Confirmation
-	exchange      string
-	routingKey    string
+	conn       *amqp.Connection
+	channel    *amqp.Channel
+	confirms   <-chan amqp.Confirmation
+	returns    <-chan amqp.Return
+	exchange   string
+	routingKey string
+	mutex      sync.Mutex
 }
-
-const MaxInFlight = 5
 
 func NewProducer(
 	conn *amqp.Connection,
 	channel *amqp.Channel,
+	confirms <-chan amqp.Confirmation,
+	returns <-chan amqp.Return,
 	exchange string,
 	routingKey string,
 ) *Producer {
-	confirmations := channel.NotifyPublish(make(
-		chan amqp.Confirmation,
-		MaxInFlight,
-	))
-
 	return &Producer{
-		conn:          conn,
-		channel:       channel,
-		confirmations: confirmations,
-		exchange:      exchange,
-		routingKey:    routingKey,
+		conn:       conn,
+		channel:    channel,
+		confirms:   confirms,
+		returns:    returns,
+		exchange:   exchange,
+		routingKey: routingKey,
 	}
 }
 
@@ -45,27 +45,34 @@ func (p *Producer) Shutdown() error {
 }
 
 func (p *Producer) Publish(body []byte) error {
-	if err := p.channel.Publish(
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	err := p.channel.Publish(
 		p.exchange,
 		p.routingKey,
-		false, // mandatory
+		true,  // mandatory
 		false, // immediate
 		amqp.Publishing{
-			ContentType:  "text/json",
+			DeliveryMode: amqp.Persistent,
+			Timestamp:    time.Now(),
+			ContentType:  "text/plain",
 			Body:         body,
-			DeliveryMode: amqp.Transient,
 		},
-	); err != nil {
-		return fmt.Errorf("failed to publish (%s)", err.Error())
+	)
+
+	if err != nil {
+		return err
 	}
 
-	confirmation := <-p.confirmations
+	if confirm := <-p.confirms; !confirm.Ack {
+		return fmt.Errorf("publish was nacked")
+	}
 
-	if !confirmation.Ack {
-		return fmt.Errorf(
-			"failed to deliver message (delivery tag %d)",
-			confirmation.DeliveryTag,
-		)
+	select {
+	case <-p.returns:
+		return fmt.Errorf("message was not routed")
+	default:
 	}
 
 	return nil
