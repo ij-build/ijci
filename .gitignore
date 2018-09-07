@@ -1,4 +1,10 @@
+# Build Logs
 .ij
-vendor
+
+# Build Artifacts
 ijci-api
 ijci-agent
+vendor
+
+# Local Data
+repos
