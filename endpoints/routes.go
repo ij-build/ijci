@@ -10,6 +10,14 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewLogging())
 	router.AddMiddleware(middleware.NewRequestID())
 
-	router.MustRegister("/hook", &HookResource{})
+	router.MustRegister(
+		"/hook",
+		&HookResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/repo.yaml"),
+			chevron.MethodPost,
+		),
+	)
+
 	return nil
 }
