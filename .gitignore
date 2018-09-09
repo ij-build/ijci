@@ -2,9 +2,12 @@
 .ij
 
 # Build Artifacts
+vendor
+
+# Binaries
 ijci-api
 ijci-agent
-vendor
+ijci-migrate
 
 # Local Data
 repos
