@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/amqp"
+	"github.com/efritz/ijci/db"
 	"github.com/efritz/ijci/message"
 )
 
@@ -21,6 +22,7 @@ type (
 		*chevron.EmptySpec
 
 		Logger   nacelle.Logger `service:"logger"`
+		DB       *db.LoggingDB  `service:"db"`
 		Producer *amqp.Producer `service:"amqp-producer"`
 	}
 

@@ -6,10 +6,16 @@ import (
 	basehttp "github.com/efritz/nacelle/base/http"
 
 	"github.com/efritz/ijci/amqp"
+	"github.com/efritz/ijci/db"
 	"github.com/efritz/ijci/http"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+	processes.RegisterInitializer(
+		db.NewInitializer(),
+		nacelle.WithInitializerName("db"),
+	)
+
 	processes.RegisterInitializer(
 		amqp.NewProducerInitializer(),
 		nacelle.WithInitializerName("amqp-producer"),

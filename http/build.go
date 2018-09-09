@@ -9,12 +9,15 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
 	"github.com/gorilla/mux"
+
+	"github.com/efritz/ijci/db"
 )
 
 type BuildResource struct {
 	*chevron.EmptySpec
 
 	Logger nacelle.Logger `service:"logger"`
+	DB     *db.LoggingDB  `service:"db"`
 }
 
 func (br *BuildResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {

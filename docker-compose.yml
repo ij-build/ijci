@@ -8,11 +8,13 @@ services:
       - LOG_SHORT_TIME=true
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
+      - POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
       - AMQP_EXCHANGE=ijci
       - AMQP_ROUTING_KEY=key
       - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
     depends_on:
       - rabbitmq
+      - postgres
     ports:
       - 5000:5000
 
@@ -34,6 +36,17 @@ services:
     volumes:
       - ./repos:/repos
       - /var/run/docker.sock:/var/run/docker.sock
+
+  # External Services
+
+  postgres:
+    image: postgres:10.5
+    environment:
+      - POSTGRES_DB=ijci
+      - POSTGRES_USER=ijci
+      - POSTGRES_PASSWORD=ijci
+    ports:
+      - 5432:5432
 
   rabbitmq:
     image: rabbitmq:3-management
