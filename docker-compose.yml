@@ -37,6 +37,15 @@ services:
       - ./repos:/repos
       - /var/run/docker.sock:/var/run/docker.sock
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    environment:
+      - IJCI_POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
+    depends_on:
+      - postgres
+
   # External Services
 
   postgres:

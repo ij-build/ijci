@@ -12,19 +12,23 @@ export:
     - vendor
     - api:ijci-api
     - agent:ijci-agent
+    - migrate:ijci-migrate
 
 tasks:
   install-vendors:
     image: ${GO_IMAGE}
     script: |
       if [ ! -d vendor ]; then
+        echo "installing vendors"
         go get -u github.com/golang/dep/cmd/dep
         dep ensure
       fi
 
   go-build:
     image: ${GO_IMAGE}
-    script: go build ./cmd/${APP_NAME}
+    script: |
+      echo "building ${APP_NAME} binary"
+      go build ./cmd/${APP_NAME}
     environment:
       - GOOS=linux
       - GOARCH=amd64
@@ -48,6 +52,8 @@ plans:
             environment: APP_NAME=api
           - name: go-build
             environment: APP_NAME=agent
+          - name: go-build
+            environment: APP_NAME=migrate
         parallel: true
 
   build-images:
@@ -58,6 +64,8 @@ plans:
             environment: APP_NAME=api
           - name: build-image
             environment: APP_NAME=agent
+          - name: build-image
+            environment: APP_NAME=migrate
         parallel: true
 
 metaplans:
