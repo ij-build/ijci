@@ -2,6 +2,20 @@
 
 
 [[projects]]
+  branch = "default"
+  digest = "1:624e93ecb061327a984d92e47745de84986d91ad2bb4a9c6868a534d940504b1"
+  name = "bitbucket.org/rw_grim/govcs"
+  packages = [
+    ".",
+    "exec",
+    "git",
+    "hg",
+    "vcs",
+  ]
+  pruneopts = "UT"
+  revision = "f58bec590cb37dce2776a8b1ea7db265c7a41a81"
+
+[[projects]]
   branch = "master"
   digest = "1:05fd41a9198fcb4bd1742c33bdadf9f6c42025658ea6ba115500ecdaa4276d91"
   name = "github.com/aphistic/gomol"
@@ -89,10 +103,37 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3899ffdeb36e551d07f560d736ecd0cc8e25bc951452a2b7ab60388f63aef4af"
+  digest = "1:aac06e398217761cd8658c060611de59b3b5c15c0f35cf6332605d7a290763ac"
+  name = "github.com/efritz/ij"
+  packages = [
+    "asset",
+    "command",
+    "config",
+    "environment",
+    "loader",
+    "loader/jsonconfig",
+    "loader/schema",
+    "logging",
+    "network",
+    "options",
+    "paths",
+    "registry",
+    "runner",
+    "scratch",
+    "ssh",
+    "subcommand",
+    "util",
+  ]
+  pruneopts = "UT"
+  revision = "4eae3edf475c8c7c0d076cb18ff904d6327dd1aa"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c1d2bf59c0186f2a146f34ce8fb544ac91bdea297e670132a808b0b8543511c0"
   name = "github.com/efritz/nacelle"
   packages = [
     ".",
+    "base/grpc",
     "base/http",
     "config",
     "config/tag",
@@ -118,6 +159,18 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "6e034bf5a1dbe0ea4c2496d98c50a8e4dc840211"
+
+[[projects]]
+  branch = "master"
+  digest = "1:bb4b40a466462cf93b513b4f1fff6e94dca31a54536a5f016c53a3cf1eaff9de"
+  name = "github.com/efritz/scarf"
+  packages = [
+    ".",
+    "logging",
+    "middleware",
+  ]
+  pruneopts = "UT"
+  revision = "fb06960e3fede633f68c1a5cbd32b403693c3763"
 
 [[projects]]
   branch = "master"
@@ -170,6 +223,20 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:4c0989ca0bcd10799064318923b9bc2db6b4d6338dd75f3f2d86c3511aaaf5cf"
+  name = "github.com/golang/protobuf"
+  packages = [
+    "proto",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/timestamp",
+  ]
+  pruneopts = "UT"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:38ec74012390146c45af1f92d46e5382b50531247929ff3a685d2b2be65155ac"
   name = "github.com/gomodule/redigo"
   packages = [
@@ -213,6 +280,14 @@
   revision = "d14ea06fba99483203c19d92cfcd13ebe73135f4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:400e113a367b511b9b09ca642ee11d9885485a93838526d697033af334a2fdde"
+  name = "github.com/kballard/go-shellquote"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "95032a82bc518f77982ea72343cc1ade730072f0"
+
+[[projects]]
   digest = "1:ae5f4d0779a45e2cb3075d8b3ece6c623e171407f4aac83521392ff06d188871"
   name = "github.com/kevinburke/ssh_config"
   packages = ["."]
@@ -235,6 +310,17 @@
   pruneopts = "UT"
   revision = "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
   version = "v0.0.4"
+
+[[projects]]
+  branch = "master"
+  digest = "1:36aebe90a13cf9128280ac834399b8bebf83685283c78df279d61c46bb2a8d83"
+  name = "github.com/mattn/go-zglob"
+  packages = [
+    ".",
+    "fastwalk",
+  ]
+  pruneopts = "UT"
+  revision = "2ea3427bfa539cca900ca2768d8663ecc8a708c1"
 
 [[projects]]
   branch = "master"
@@ -356,37 +442,96 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
+  digest = "1:deafe4ab271911fec7de5b693d7faae3f38796d9eb8622e2b9e7df42bb3dfea9"
   name = "golang.org/x/net"
-  packages = ["context"]
+  packages = [
+    "context",
+    "http/httpguts",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "internal/timeseries",
+    "trace",
+  ]
   pruneopts = "UT"
   revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
 
 [[projects]]
   branch = "master"
-  digest = "1:0ed1788dc3845fa86e9ade2183538e920adf76fb9f8760e69236fa2cb0d7c9d9"
+  digest = "1:374fc90fcb026e9a367e3fad29e988e5dd944b68ca3f24a184d77abc5307dda4"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "917fdcba135dcbaccd57425db91723541b4427c8"
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
-  digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
+  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
     "internal/gen",
+    "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "language",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
+    "unicode/rangetable",
   ]
   pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:077c1c599507b3b3e9156d17d36e1e61928ee9b53a5b420f10f28ebd4a0b275c"
+  name = "google.golang.org/genproto"
+  packages = ["googleapis/rpc/status"]
+  pruneopts = "UT"
+  revision = "11092d34479b07829b72e10713b159248caf5dad"
+
+[[projects]]
+  digest = "1:3dd7996ce6bf52dec6a2f69fa43e7c4cefea1d4dfa3c8ab7a5f8a9f7434e239d"
+  name = "google.golang.org/grpc"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "codes",
+    "connectivity",
+    "credentials",
+    "encoding",
+    "encoding/proto",
+    "grpclog",
+    "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "internal/transport",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "stats",
+    "status",
+    "tap",
+  ]
+  pruneopts = "UT"
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
 
 [[projects]]
   digest = "1:2c69bd327969215d23e928e5e7243700c59fff05f558401675107dcf15e438db"
@@ -473,10 +618,21 @@
   input-imports = [
     "github.com/efritz/chevron",
     "github.com/efritz/chevron/middleware",
+    "github.com/efritz/ij/config",
+    "github.com/efritz/ij/loader",
+    "github.com/efritz/ij/options",
+    "github.com/efritz/ij/subcommand",
     "github.com/efritz/nacelle",
     "github.com/efritz/nacelle/base/http",
     "github.com/efritz/response",
+    "github.com/efritz/scarf",
+    "github.com/efritz/scarf/logging",
+    "github.com/efritz/scarf/middleware",
+    "github.com/golang/protobuf/proto",
+    "github.com/google/uuid",
     "github.com/streadway/amqp",
+    "golang.org/x/net/context",
+    "google.golang.org/grpc",
     "gopkg.in/src-d/go-git.v4",
   ]
   solver-name = "gps-cdcl"
