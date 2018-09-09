@@ -1,4 +1,4 @@
-package endpoints
+package http
 
 import (
 	"github.com/efritz/chevron"
@@ -11,10 +11,19 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewRequestID())
 
 	router.MustRegister(
-		"/hook",
-		&HookResource{},
+		"/builds",
+		&BuildsResource{},
 		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/repo.yaml"),
+			middleware.NewSchemaMiddleware("/schemas/build-request.yaml"),
+			chevron.MethodPost,
+		),
+	)
+
+	router.MustRegister(
+		"/builds/{build_id}",
+		&BuildResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/build-request.yaml"),
 			chevron.MethodPost,
 		),
 	)

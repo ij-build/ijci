@@ -1,7 +1,7 @@
 type: object
 properties:
-  repo:
+  repository_url:
     type: string
 additionalProperties: false
 required:
-  - repo
+  - repository_url
