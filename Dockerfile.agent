@@ -1,17 +1,7 @@
-FROM golang:1.11-alpine as builder
-
-RUN set -ex && \
-    apk add --no-cache git mercurial
-
-RUN go get github.com/efritz/ij && go install github.com/efritz/ij
-
-##
-
 FROM alpine:3.8
 
 RUN set -ex && \
     apk add --no-cache git mercurial docker
 
-COPY --from=builder /go/bin/ij /
 CMD ["./ijci-agent"]
 COPY ijci-agent /

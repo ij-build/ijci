@@ -1,24 +1,17 @@
 package listener
 
 import (
-	"bufio"
-	"context"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"sync"
-
 	"github.com/efritz/nacelle"
-	"gopkg.in/src-d/go-git.v4"
 
 	"github.com/efritz/ijci/amqp"
+	"github.com/efritz/ijci/handler"
+	"github.com/efritz/ijci/message"
 )
 
 type Listener struct {
-	Logger   nacelle.Logger `service:"logger"`
-	Consumer *amqp.Consumer `service:"amqp-consumer"`
+	Logger   nacelle.Logger  `service:"logger"`
+	Consumer *amqp.Consumer  `service:"amqp-consumer"`
+	Handler  handler.Handler `service:"handler"`
 }
 
 func NewListener() *Listener {
@@ -33,83 +26,40 @@ func (l *Listener) Init(config nacelle.Config) error {
 
 func (l *Listener) Start() error {
 	for delivery := range l.Consumer.Deliveries() {
-		if err := l.handle(string(delivery.Body)); err != nil {
-			l.Logger.Error(
-				"failed to handle message (%s)",
-				err.Error(),
-			)
+		if err := l.handle(delivery.Body); err != nil {
+			delivery.Nack(false, false)
+		} else {
+			delivery.Ack(false)
 		}
-
-		delivery.Ack(false)
 	}
 
 	l.Logger.Info("No longer consuming")
 	return nil
 }
 
-func (l *Listener) Stop() error {
-	return l.Consumer.Shutdown()
-}
+func (l *Listener) handle(payload []byte) error {
+	message := &message.BuildRequest{}
+	if err := message.Unmarshal(payload); err != nil {
+		l.Logger.Error(
+			"Failed to unmarshal message (%s)",
+			err.Error(),
+		)
 
-func (l *Listener) handle(url string) error {
-	directory, err := ioutil.TempDir("", "build")
-	if err != nil {
-		return err
+		return nil
 	}
 
-	defer os.RemoveAll(directory)
+	l.Logger.Info("Handling build %s", message.BuildID)
 
-	l.Logger.Info(
-		"Cloning repository %s into %s",
-		url,
-		directory,
-	)
-
-	cloneOptions := &git.CloneOptions{
-		URL:               url,
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-	}
-
-	if _, err := git.PlainClone(directory, false, cloneOptions); err != nil {
-		return fmt.Errorf(
-			"failed to clone repository (%s)",
+	if err := l.Handler.Handle(message); err != nil {
+		l.Logger.Error(
+			"Failed to handle message (%s)",
 			err.Error(),
 		)
 	}
 
-	command := exec.CommandContext(context.Background(), "/ij", "--no-color")
-	command.Dir = directory
-
-	outReader, err := command.StdoutPipe()
-	if err != nil {
-		return err
-	}
-
-	errReader, err := command.StderrPipe()
-	if err != nil {
-		return err
-	}
-
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-
-	go func() { defer wg.Done(); processOutput(outReader) }()
-	go func() { defer wg.Done(); processOutput(errReader) }()
-
-	if err := command.Run(); err != nil {
-		return err
-	}
-
-	wg.Wait()
-
-	l.Logger.Warning("Build complete")
 	return nil
 }
 
-func processOutput(r io.Reader) {
-	scanner := bufio.NewScanner(r)
-
-	for scanner.Scan() {
-		fmt.Printf("> %#v\n", scanner.Text())
-	}
+func (l *Listener) Stop() error {
+	return l.Consumer.Shutdown()
 }
