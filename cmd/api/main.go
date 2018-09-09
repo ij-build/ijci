@@ -6,7 +6,7 @@ import (
 	basehttp "github.com/efritz/nacelle/base/http"
 
 	"github.com/efritz/ijci/amqp"
-	"github.com/efritz/ijci/endpoints"
+	"github.com/efritz/ijci/http"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
@@ -15,7 +15,7 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 		nacelle.WithInitializerName("amqp-producer"),
 	)
 
-	setupRoutes := chevron.RouteInitializerFunc(endpoints.SetupRoutes)
+	setupRoutes := chevron.RouteInitializerFunc(http.SetupRoutes)
 
 	processes.RegisterProcess(
 		basehttp.NewServer(chevron.NewInitializer(setupRoutes)),
