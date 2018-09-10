@@ -3,7 +3,6 @@ package listener
 import (
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
-	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/amqp"
 	"github.com/efritz/ijci/api-client"
@@ -62,13 +61,11 @@ func (l *Listener) handle(payload []byte) error {
 		return nil
 	}
 
-	buildID := uuid.Must(uuid.Parse(message.BuildID))
-
 	logger := l.Logger.WithFields(nacelle.LogFields{
-		"build_id": buildID,
+		"build_id": message.BuildID,
 	})
 
-	if err := l.APIClient.UpdateBuildStatus(buildID, "in-progress"); err != nil {
+	if err := l.APIClient.UpdateBuildStatus(message.BuildID, "in-progress"); err != nil {
 		return err
 	}
 
@@ -77,7 +74,7 @@ func (l *Listener) handle(payload []byte) error {
 	status := getStatus(err)
 	logger.Info("Build completed with status %s", status)
 
-	return l.APIClient.UpdateBuildStatus(buildID, status)
+	return l.APIClient.UpdateBuildStatus(message.BuildID, status)
 }
 
 //

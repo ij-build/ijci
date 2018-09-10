@@ -10,8 +10,6 @@ import (
 	"github.com/efritz/chevron/middleware"
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 
 	"github.com/efritz/ijci/db"
 )
@@ -30,7 +28,7 @@ type (
 )
 
 func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
+	build, err := db.GetBuild(r.DB, getBuildID(req))
 	if err != nil {
 		if err == db.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)
@@ -57,7 +55,7 @@ func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacel
 }
 
 func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
+	build, err := db.GetBuild(r.DB, getBuildID(req))
 	if err != nil {
 		if err == db.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)

@@ -70,7 +70,7 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 
 func (r *BuildsResource) queueBuild(build *db.Build) error {
 	message := &message.BuildMessage{
-		BuildID:       build.BuildID.String(),
+		BuildID:       build.BuildID,
 		RepositoryURL: build.RepositoryURL,
 	}
 

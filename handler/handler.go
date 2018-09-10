@@ -12,7 +12,6 @@ import (
 	"github.com/efritz/ij/options"
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
-	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
 
 	"github.com/efritz/ijci/api-client"
@@ -57,7 +56,7 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	}
 
 	buildLogUploader := func(name, content string) error {
-		err := h.APIClient.UploadBuildLog(uuid.Must(uuid.Parse(message.BuildID)), name, content)
+		err := h.APIClient.UploadBuildLog(message.BuildID, name, content)
 		if err != nil {
 			logger.Error("Failed to upload build log (%s)", err.Error())
 		}

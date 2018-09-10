@@ -11,7 +11,6 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 
 	"github.com/efritz/ijci/db"
 )
@@ -39,7 +38,7 @@ func (r *BuildLogsResource) Post(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
-	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
+	build, err := db.GetBuild(r.DB, getBuildID(req))
 	if err != nil {
 		if err == db.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)
