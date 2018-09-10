@@ -30,18 +30,43 @@ type (
 )
 
 func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := r.getBuild(req)
-	if resp != nil {
-		return resp
+	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
+	if err != nil {
+		if err == db.ErrDoesNotExist {
+			return response.Empty(http.StatusNotFound)
+		}
+
+		return internalError(
+			r.Logger,
+			fmt.Errorf("failed to fetch build record (%s)", err.Error()),
+		)
 	}
 
-	return response.JSON(build)
+	buildLogs, err := db.GetBuildLogs(r.DB, build.BuildID)
+	if err != nil {
+		return internalError(
+			r.Logger,
+			fmt.Errorf("failed to fetch build log records (%s)", err.Error()),
+		)
+	}
+
+	return response.JSON(map[string]interface{}{
+		"build":      build,
+		"build_logs": buildLogs,
+	})
 }
 
 func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := r.getBuild(req)
-	if resp != nil {
-		return resp
+	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
+	if err != nil {
+		if err == db.ErrDoesNotExist {
+			return response.Empty(http.StatusNotFound)
+		}
+
+		return internalError(
+			r.Logger,
+			fmt.Errorf("failed to fetch build record (%s)", err.Error()),
+		)
 	}
 
 	payload := &jsonBuildPatchPayload{}
@@ -62,20 +87,4 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 	}
 
 	return response.JSON(build)
-}
-
-func (r *BuildResource) getBuild(req *http.Request) (*db.Build, response.Response) {
-	build, err := db.GetBuild(r.DB, uuid.Must(uuid.Parse(mux.Vars(req)["build_id"])))
-	if err != nil {
-		if err == db.ErrDoesNotExist {
-			return nil, response.Empty(http.StatusNotFound)
-		}
-
-		return nil, internalError(
-			r.Logger,
-			fmt.Errorf("failed to fetch build record (%s)", err.Error()),
-		)
-	}
-
-	return build, nil
 }

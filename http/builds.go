@@ -51,19 +51,14 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 	if err := db.CreateBuild(r.DB, r.Logger, build); err != nil {
 		return internalError(
 			r.Logger,
-			fmt.Errorf("failed to create build (%s)", err.Error()),
+			fmt.Errorf("failed to create build record (%s)", err.Error()),
 		)
 	}
 
-	message := &message.BuildMessage{
-		BuildID:       buildID.String(),
-		RepositoryURL: repositoryURL,
-	}
-
-	if err := r.Producer.Publish(message); err != nil {
+	if err := r.queueBuild(build); err != nil {
 		return internalError(
 			r.Logger,
-			fmt.Errorf("failed to publish message (%s)", err.Error()),
+			err,
 		)
 	}
 
@@ -71,4 +66,17 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 	resp.SetStatusCode(http.StatusCreated)
 	resp.SetHeader("Location", fmt.Sprintf("/builds/%s", buildID))
 	return resp
+}
+
+func (r *BuildsResource) queueBuild(build *db.Build) error {
+	message := &message.BuildMessage{
+		BuildID:       build.BuildID.String(),
+		RepositoryURL: build.RepositoryURL,
+	}
+
+	if err := r.Producer.Publish(message); err != nil {
+		return fmt.Errorf("failed to publish message (%s)", err.Error())
+	}
+
+	return nil
 }

@@ -32,5 +32,14 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 		),
 	)
 
+	router.MustRegister(
+		fmt.Sprintf("/builds/{build_id:%s}/logs", uuidPattern),
+		&BuildLogsResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/build-log-post.yaml"),
+			chevron.MethodPost,
+		),
+	)
+
 	return nil
 }

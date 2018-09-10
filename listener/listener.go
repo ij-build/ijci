@@ -1,24 +1,21 @@
 package listener
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
+	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/amqp"
+	"github.com/efritz/ijci/api-client"
 	"github.com/efritz/ijci/handler"
 	"github.com/efritz/ijci/message"
 )
 
 type Listener struct {
-	Logger   nacelle.Logger  `service:"logger"`
-	Consumer *amqp.Consumer  `service:"amqp-consumer"`
-	Handler  handler.Handler `service:"handler"`
-	apiAddr  string
+	Logger    nacelle.Logger  `service:"logger"`
+	Consumer  *amqp.Consumer  `service:"amqp-consumer"`
+	Handler   handler.Handler `service:"handler"`
+	APIClient api.Client      `service:"api"`
 }
 
 func NewListener() *Listener {
@@ -28,12 +25,6 @@ func NewListener() *Listener {
 }
 
 func (l *Listener) Init(config nacelle.Config) error {
-	listenerConfig := &Config{}
-	if err := config.Load(listenerConfig); err != nil {
-		return err
-	}
-
-	l.apiAddr = listenerConfig.APIAddr
 	return nil
 }
 
@@ -71,42 +62,22 @@ func (l *Listener) handle(payload []byte) error {
 		return nil
 	}
 
+	buildID := uuid.Must(uuid.Parse(message.BuildID))
+
 	logger := l.Logger.WithFields(nacelle.LogFields{
-		"build_id": message.BuildID,
+		"build_id": buildID,
 	})
 
+	if err := l.APIClient.UpdateBuildStatus(buildID, "in-progress"); err != nil {
+		return err
+	}
+
 	logger.Info("Starting build")
-	err := l.Handler.Handle(message)
+	err := l.Handler.Handle(message, logger)
 	status := getStatus(err)
 	logger.Info("Build completed with status %s", status)
 
-	return l.updateBuild(message.BuildID, status)
-}
-
-func (l *Listener) updateBuild(buildID, status string) error {
-	payload, err := json.Marshal(map[string]string{"build_status": status})
-	if err != nil {
-		return fmt.Errorf("failed to marshal API payload (%s)", err.Error())
-	}
-
-	url := fmt.Sprintf("%s/builds/%s", l.apiAddr, buildID)
-
-	req, err := http.NewRequest("PATCH", url, bytes.NewReader(payload))
-	if err != nil {
-		return fmt.Errorf("failed to construct API request")
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to patch build (%s)", err.Error())
-	}
-
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected %d status from API", resp.StatusCode)
-	}
-
-	return nil
+	return l.APIClient.UpdateBuildStatus(buildID, status)
 }
 
 //

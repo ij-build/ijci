@@ -12,28 +12,28 @@ import (
 	"github.com/efritz/ij/options"
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
+	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
 
+	"github.com/efritz/ijci/api-client"
 	"github.com/efritz/ijci/message"
 )
 
 type (
 	Handler interface {
-		Handle(message *message.BuildMessage) error
+		Handle(message *message.BuildMessage, logger nacelle.Logger) error
 	}
 
 	handler struct {
-		Logger nacelle.Logger `service:"logger"`
+		APIClient api.Client `service:"api"`
 	}
 )
 
 func NewHandler() *handler {
-	return &handler{
-		Logger: nacelle.NewNilLogger(),
-	}
+	return &handler{}
 }
 
-func (h *handler) Handle(message *message.BuildMessage) error {
+func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) error {
 	directory, err := ioutil.TempDir("", "build")
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (h *handler) Handle(message *message.BuildMessage) error {
 
 	defer os.RemoveAll(directory)
 
-	if err := h.clone(message.RepositoryURL, directory); err != nil {
+	if err := h.clone(message.RepositoryURL, directory, logger); err != nil {
 		return fmt.Errorf(
 			"failed to clone repository (%s)",
 			err.Error(),
@@ -56,16 +56,25 @@ func (h *handler) Handle(message *message.BuildMessage) error {
 		)
 	}
 
-	if err := h.runDefaultPlan(config); err != nil {
+	buildLogUploader := func(name, content string) error {
+		err := h.APIClient.UploadBuildLog(uuid.Must(uuid.Parse(message.BuildID)), name, content)
+		if err != nil {
+			logger.Error("Failed to upload build log (%s)", err.Error())
+		}
+
+		return err
+	}
+
+	if err := h.runDefaultPlan(config, logger, buildLogUploader); err != nil {
 		return fmt.Errorf("build failed (%s)", err.Error())
 	}
 
-	h.Logger.Info("Build complete")
+	logger.Info("Build complete")
 	return nil
 }
 
-func (h *handler) clone(url, directory string) error {
-	h.Logger.Info(
+func (h *handler) clone(url, directory string, logger nacelle.Logger) error {
+	logger.Info(
 		"Cloning repository %s into %s",
 		url,
 		directory,
@@ -87,8 +96,12 @@ func (h *handler) loadConfig(directory string) (*config.Config, error) {
 	return loader.LoadFile(filepath.Join(directory, "ij.yaml"), nil)
 }
 
-func (h *handler) runDefaultPlan(config *config.Config) error {
-	processor := NewLogProcessor(h.Logger)
+func (h *handler) runDefaultPlan(
+	config *config.Config,
+	logger nacelle.Logger,
+	buildLogUploader BuildLogUploader,
+) error {
+	processor := NewLogProcessor(logger, buildLogUploader)
 
 	fileFactory := func(prefix string) (io.WriteCloser, io.WriteCloser, error) {
 		outFile := processor.NewFile(fmt.Sprintf("%s.out", prefix))
