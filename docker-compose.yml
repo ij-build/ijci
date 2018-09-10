@@ -26,12 +26,14 @@ services:
       - LOG_SHORT_TIME=true
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
+      - API_ADDR=http://api:5000
       - AMQP_CONSUMER_TAG=ctag
       - AMQP_EXCHANGE=ijci
       - AMQP_ROUTING_KEY=key
       - AMQP_QUEUE_NAME=build-requests
       - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
     depends_on:
+      - api
       - rabbitmq
     volumes:
       - ./repos:/repos

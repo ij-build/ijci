@@ -19,7 +19,7 @@ import (
 
 type (
 	Handler interface {
-		Handle(message *message.BuildRequest) error
+		Handle(message *message.BuildMessage) error
 	}
 
 	handler struct {
@@ -33,7 +33,7 @@ func NewHandler() *handler {
 	}
 }
 
-func (h *handler) Handle(message *message.BuildRequest) error {
+func (h *handler) Handle(message *message.BuildMessage) error {
 	directory, err := ioutil.TempDir("", "build")
 	if err != nil {
 		return err
@@ -119,14 +119,8 @@ func (h *handler) runDefaultPlan(config *config.Config) error {
 		SSHIdentities:       nil,
 	}
 
-	runner := subcommand.NewRunCommand(
+	return subcommand.NewRunCommand(
 		appOptions,
 		runOptions,
-	)
-
-	if err := runner(config); err != nil && err != subcommand.ErrBuildFailed {
-		return err
-	}
-
-	return nil
+	)(config)
 }

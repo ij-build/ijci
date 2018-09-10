@@ -8,15 +8,21 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type Producer struct {
-	conn       *amqp.Connection
-	channel    *amqp.Channel
-	confirms   <-chan amqp.Confirmation
-	returns    <-chan amqp.Return
-	exchange   string
-	routingKey string
-	mutex      sync.Mutex
-}
+type (
+	Producer struct {
+		conn       *amqp.Connection
+		channel    *amqp.Channel
+		confirms   <-chan amqp.Confirmation
+		returns    <-chan amqp.Return
+		exchange   string
+		routingKey string
+		mutex      sync.Mutex
+	}
+
+	Marshaler interface {
+		Marshal() ([]byte, error)
+	}
+)
 
 func NewProducer(
 	conn *amqp.Connection,
@@ -44,11 +50,16 @@ func (p *Producer) Shutdown() error {
 	return nil
 }
 
-func (p *Producer) Publish(body []byte) error {
+func (p *Producer) Publish(message Marshaler) error {
+	body, err := message.Marshal()
+	if err != nil {
+		return fmt.Errorf("failed to marshal message (%s)", err.Error())
+	}
+
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	err := p.channel.Publish(
+	if err := p.channel.Publish(
 		p.exchange,
 		p.routingKey,
 		true,  // mandatory
@@ -59,9 +70,7 @@ func (p *Producer) Publish(body []byte) error {
 			ContentType:  "text/plain",
 			Body:         body,
 		},
-	)
-
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
