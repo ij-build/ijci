@@ -11,8 +11,8 @@ create table builds (
     build_id uuid primary key,
     repository_url text not null,
     build_status build_status not null,
-	created_at timestamp with time zone not null,
-	updated_at timestamp with time zone not null
+    created_at timestamp with time zone not null,
+    updated_at timestamp with time zone not null
 );
 
 -- +migrate Down

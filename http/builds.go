@@ -40,10 +40,8 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	var (
-		buildID       = uuid.New()
-		repositoryURL = requestPayload.RepositoryURL
-	)
+	buildID := uuid.New()
+	repositoryURL := requestPayload.RepositoryURL
 
 	build := &db.Build{
 		BuildID:       buildID,
