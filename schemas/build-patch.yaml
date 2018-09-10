@@ -1,0 +1,12 @@
+type: object
+properties:
+  build_status:
+    type: string
+    enum:
+      - in-progress
+      - errored
+      - failed
+      - succeeded
+additionalProperties: false
+required:
+  - build_status

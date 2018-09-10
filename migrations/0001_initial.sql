@@ -2,7 +2,9 @@
 create type build_status as enum (
     'queued',
     'in-progress',
-    'complete'
+    'errored',
+    'failed',
+    'succeeded'
 );
 
 create table builds (

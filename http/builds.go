@@ -26,41 +26,51 @@ type (
 		Producer *amqp.Producer `service:"amqp-producer"`
 	}
 
-	jsonBuildRequest struct {
+	jsonBuildPostPayload struct {
 		RepositoryURL string `json:"repository_url"`
 	}
 )
 
-func (br *BuildsResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	requestPayload := &jsonBuildRequest{}
+func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+	requestPayload := &jsonBuildPostPayload{}
 	if err := json.Unmarshal(middleware.GetJSONData(ctx), requestPayload); err != nil {
 		return internalError(
-			br.Logger,
+			r.Logger,
 			fmt.Errorf("failed to unmarshal request body (%s)", err.Error()),
 		)
 	}
 
-	message := message.BuildRequest{
-		BuildID:       uuid.New().String(),
-		RepositoryURL: requestPayload.RepositoryURL,
+	var (
+		buildID       = uuid.New()
+		repositoryURL = requestPayload.RepositoryURL
+	)
+
+	build := &db.Build{
+		BuildID:       buildID,
+		RepositoryURL: repositoryURL,
 	}
 
-	messagePayload, err := message.Marshal()
-	if err != nil {
+	if err := db.CreateBuild(r.DB, r.Logger, build); err != nil {
 		return internalError(
-			br.Logger,
-			fmt.Errorf("failed to marshal message (%s)", err.Error()),
+			r.Logger,
+			fmt.Errorf("failed to create build (%s)", err.Error()),
 		)
 	}
 
-	// TODO - put record in DB
+	message := &message.BuildMessage{
+		BuildID:       buildID.String(),
+		RepositoryURL: repositoryURL,
+	}
 
-	if err := br.Producer.Publish(messagePayload); err != nil {
+	if err := r.Producer.Publish(message); err != nil {
 		return internalError(
-			br.Logger,
+			r.Logger,
 			fmt.Errorf("failed to publish message (%s)", err.Error()),
 		)
 	}
 
-	return response.Empty(http.StatusOK)
+	resp := response.JSON(build)
+	resp.SetStatusCode(http.StatusCreated)
+	resp.SetHeader("Location", fmt.Sprintf("/builds/%s", buildID))
+	return resp
 }
