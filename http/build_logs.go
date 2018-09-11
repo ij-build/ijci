@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/db"
+	"github.com/efritz/ijci/s3"
 )
 
 type (
@@ -21,6 +22,7 @@ type (
 
 		Logger nacelle.Logger `service:"logger"`
 		DB     *db.LoggingDB  `service:"db"`
+		S3     s3.Client      `service:"s3"`
 	}
 
 	jsonBuildLogPostPayload struct {
@@ -50,11 +52,21 @@ func (r *BuildLogsResource) Post(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
+	buildLogID := uuid.New()
+	key := buildLogID.String()
+
+	if err := r.S3.Upload(ctx, key, payload.Content); err != nil {
+		return internalError(
+			r.Logger,
+			fmt.Errorf("failed to upload log file (%s)", err.Error()),
+		)
+	}
+
 	buildLog := &db.BuildLog{
-		BuildLogID: uuid.New(),
+		BuildLogID: buildLogID,
 		BuildID:    build.BuildID,
 		Name:       payload.Name,
-		Content:    payload.Content,
+		Key:        key,
 	}
 
 	if err := db.CreateBuildLog(r.DB, r.Logger, buildLog); err != nil {

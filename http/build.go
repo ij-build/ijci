@@ -12,6 +12,7 @@ import (
 	"github.com/efritz/response"
 
 	"github.com/efritz/ijci/db"
+	"github.com/efritz/ijci/s3"
 )
 
 type (
@@ -20,6 +21,7 @@ type (
 
 		Logger nacelle.Logger `service:"logger"`
 		DB     *db.LoggingDB  `service:"db"`
+		S3     s3.Client      `service:"s3"`
 	}
 
 	jsonBuildPatchPayload struct {
@@ -48,9 +50,23 @@ func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacel
 		)
 	}
 
+	buildLogContents := map[string]string{}
+	for _, buildLog := range buildLogs {
+		content, err := r.S3.Download(ctx, buildLog.Key)
+		if err != nil {
+			return internalError(
+				r.Logger,
+				fmt.Errorf("failed to fetch build log content (%s)", err.Error()),
+			)
+		}
+
+		buildLogContents[buildLog.BuildLogID.String()] = content
+	}
+
 	return response.JSON(map[string]interface{}{
-		"build":      build,
-		"build_logs": buildLogs,
+		"build":              build,
+		"build_logs":         buildLogs,
+		"build_log_contents": buildLogContents,
 	})
 }
 

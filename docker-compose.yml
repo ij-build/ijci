@@ -9,12 +9,17 @@ services:
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
       - POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
+      - S3_ENDPOINT=http://minio:9000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=XCJ8Jwy7eUqqwJfv9DJJ
+      - AWS_SECRET_ACCESS_KEY=urx4H3kAS5zpKSLf7wVXGDvFYxCNdHbVcndNRvWZ
       - AMQP_EXCHANGE=ijci
       - AMQP_ROUTING_KEY=key
       - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
     depends_on:
-      - rabbitmq
+      - minio
       - postgres
+      - rabbitmq
     ports:
       - 5000:5000
 
@@ -58,6 +63,15 @@ services:
       - POSTGRES_PASSWORD=ijci
     ports:
       - 5432:5432
+
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=XCJ8Jwy7eUqqwJfv9DJJ
+      - MINIO_SECRET_KEY=urx4H3kAS5zpKSLf7wVXGDvFYxCNdHbVcndNRvWZ
+    ports:
+      - 9000:9000
 
   rabbitmq:
     image: rabbitmq:3-management

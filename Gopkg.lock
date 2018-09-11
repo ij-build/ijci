@@ -32,6 +32,48 @@
   revision = "9fa1742697a8bf85e5de5680b861ebfaa5cb4c1f"
 
 [[projects]]
+  digest = "1:8dea400e708afab08d49a4409509f873b568f3a3677f2d59f34db10054090150"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/restxml",
+    "private/protocol/xml/xmlutil",
+    "service/s3",
+    "service/s3/s3iface",
+    "service/s3/s3manager",
+    "service/sts",
+  ]
+  pruneopts = "UT"
+  revision = "71a2a92b0063297b055b6f5a014d441c142da2ce"
+  version = "v1.15.32"
+
+[[projects]]
   branch = "master"
   digest = "1:69800e1753d98186daee9730282637aae3e5ef5d94ca33f23176dad401e79408"
   name = "github.com/bradhe/stopwatch"
@@ -129,11 +171,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c1d2bf59c0186f2a146f34ce8fb544ac91bdea297e670132a808b0b8543511c0"
+  digest = "1:3899ffdeb36e551d07f560d736ecd0cc8e25bc951452a2b7ab60388f63aef4af"
   name = "github.com/efritz/nacelle"
   packages = [
     ".",
-    "base/grpc",
     "base/http",
     "config",
     "config/tag",
@@ -159,18 +200,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "6e034bf5a1dbe0ea4c2496d98c50a8e4dc840211"
-
-[[projects]]
-  branch = "master"
-  digest = "1:bb4b40a466462cf93b513b4f1fff6e94dca31a54536a5f016c53a3cf1eaff9de"
-  name = "github.com/efritz/scarf"
-  packages = [
-    ".",
-    "logging",
-    "middleware",
-  ]
-  pruneopts = "UT"
-  revision = "fb06960e3fede633f68c1a5cbd32b403693c3763"
 
 [[projects]]
   branch = "master"
@@ -223,18 +252,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:4c0989ca0bcd10799064318923b9bc2db6b4d6338dd75f3f2d86c3511aaaf5cf"
-  name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/timestamp",
-  ]
+  digest = "1:5abd6a22805b1919f6a6bca0ae58b13cef1f3412812f38569978f43ef02743d4"
+  name = "github.com/go-ini/ini"
+  packages = ["."]
   pruneopts = "UT"
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
+  revision = "5cf292cae48347c2490ac1a58fe36735fb78df7e"
+  version = "v1.38.2"
 
 [[projects]]
   digest = "1:38ec74012390146c45af1f92d46e5382b50531247929ff3a685d2b2be65155ac"
@@ -278,6 +301,13 @@
   packages = ["io"]
   pruneopts = "UT"
   revision = "d14ea06fba99483203c19d92cfcd13ebe73135f4"
+
+[[projects]]
+  digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b12d6b5"
 
 [[projects]]
   branch = "master"
@@ -450,7 +480,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:da636b5264243cb0393373237254a00192708e5babe55f1de42100517db9b448"
+  digest = "1:8d78e12e3ad578f6dc171590d93c9e2452246e0ea6c05ded2216259635373e63"
   name = "golang.org/x/crypto"
   packages = [
     "cast5",
@@ -471,21 +501,13 @@
     "ssh/knownhosts",
   ]
   pruneopts = "UT"
-  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
-  digest = "1:deafe4ab271911fec7de5b693d7faae3f38796d9eb8622e2b9e7df42bb3dfea9"
+  digest = "1:76ee51c3f468493aff39dbacc401e8831fbb765104cbf613b89bef01cf4bad70"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "http/httpguts",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "trace",
-  ]
+  packages = ["context"]
   pruneopts = "UT"
   revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
 
@@ -501,70 +523,19 @@
   revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
-  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
+  digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
   name = "golang.org/x/text"
   packages = [
-    "collate",
-    "collate/build",
-    "internal/colltab",
     "internal/gen",
-    "internal/tag",
     "internal/triegen",
     "internal/ucd",
-    "language",
-    "secure/bidirule",
     "transform",
-    "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable",
   ]
   pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:077c1c599507b3b3e9156d17d36e1e61928ee9b53a5b420f10f28ebd4a0b275c"
-  name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
-  pruneopts = "UT"
-  revision = "11092d34479b07829b72e10713b159248caf5dad"
-
-[[projects]]
-  digest = "1:3dd7996ce6bf52dec6a2f69fa43e7c4cefea1d4dfa3c8ab7a5f8a9f7434e239d"
-  name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "encoding",
-    "encoding/proto",
-    "grpclog",
-    "internal",
-    "internal/backoff",
-    "internal/channelz",
-    "internal/envconfig",
-    "internal/grpcrand",
-    "internal/transport",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap",
-  ]
-  pruneopts = "UT"
-  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
-  version = "v1.14.0"
 
 [[projects]]
   digest = "1:fa9a7c0ef59217bd22f32eb7cc027894d73f340a5633258cc079dec025db6a7f"
@@ -657,6 +628,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/efritz/chevron",
     "github.com/efritz/chevron/middleware",
     "github.com/efritz/ij/config",
@@ -666,18 +640,12 @@
     "github.com/efritz/nacelle",
     "github.com/efritz/nacelle/base/http",
     "github.com/efritz/response",
-    "github.com/efritz/scarf",
-    "github.com/efritz/scarf/logging",
-    "github.com/efritz/scarf/middleware",
-    "github.com/golang/protobuf/proto",
     "github.com/google/uuid",
     "github.com/gorilla/mux",
     "github.com/jmoiron/sqlx",
     "github.com/lib/pq",
     "github.com/rubenv/sql-migrate",
     "github.com/streadway/amqp",
-    "golang.org/x/net/context",
-    "google.golang.org/grpc",
     "gopkg.in/src-d/go-git.v4",
   ]
   solver-name = "gps-cdcl"
