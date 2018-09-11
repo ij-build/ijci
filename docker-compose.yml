@@ -32,6 +32,7 @@ services:
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
       - API_ADDR=http://api:5000
+      - PUBLIC_HOST=agent
       - AMQP_CONSUMER_TAG=ctag
       - AMQP_EXCHANGE=ijci
       - AMQP_ROUTING_KEY=key
@@ -43,6 +44,7 @@ services:
     volumes:
       - ./repos:/repos
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
 
   migrate:
     build:

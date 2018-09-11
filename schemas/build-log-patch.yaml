@@ -1,7 +1,7 @@
 type: object
 properties:
-  name:
+  content:
     type: string
 additionalProperties: false
 required:
-  - name
+  - content

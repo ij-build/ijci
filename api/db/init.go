@@ -22,7 +22,12 @@ func (i *Initializer) Init(config nacelle.Config) error {
 		return err
 	}
 
-	db, err := Dial(dbConfig.PostgresURL, i.Logger)
+	logger := i.Logger
+	if !dbConfig.LogSQLQueries {
+		logger = nacelle.NewNilLogger()
+	}
+
+	db, err := Dial(dbConfig.PostgresURL, logger)
 	if err != nil {
 		return err
 	}

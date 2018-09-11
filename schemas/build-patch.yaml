@@ -7,6 +7,9 @@ properties:
       - errored
       - failed
       - succeeded
+  agent_addr:
+    type: string
 additionalProperties: false
 required:
   - build_status
+  - agent_addr

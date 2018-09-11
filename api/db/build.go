@@ -10,11 +10,21 @@ import (
 )
 
 type Build struct {
-	BuildID       uuid.UUID `db:"build_id" json:"build_id"`
-	RepositoryURL string    `db:"repository_url" json:"repository_url"`
-	BuildStatus   string    `db:"build_status" json:"build_status"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time `db:"updated_at" json:"updated_at"`
+	BuildID       uuid.UUID  `db:"build_id" json:"build_id"`
+	RepositoryURL string     `db:"repository_url" json:"repository_url"`
+	BuildStatus   string     `db:"build_status" json:"build_status"`
+	AgentAddr     *string    `db:"agent_addr" json:"agent_addr"`
+	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt     *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+func GetBuilds(db sqlx.Queryer) ([]*Build, error) {
+	builds := []*Build{}
+	if err := sqlx.Select(db, &builds, `select * from builds`); err != nil {
+		return nil, handlePostgresError(err, "select error")
+	}
+
+	return builds, nil
 }
 
 func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*Build, error) {
@@ -27,24 +37,20 @@ func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*Build, error) {
 }
 
 func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
-	now := time.Now()
 	b.BuildStatus = "queued"
-	b.CreatedAt = now
-	b.UpdatedAt = now
+	b.CreatedAt = time.Now()
 
 	_, err := db.Exec(
 		`insert into builds (
 			build_id,
 			repository_url,
 			build_status,
-			created_at,
-			updated_at
-		) values ($1, $2, $3, $4, $5)`,
+			created_at
+		) values ($1, $2, $3, $4)`,
 		b.BuildID,
 		b.RepositoryURL,
 		b.BuildStatus,
 		b.CreatedAt,
-		b.UpdatedAt,
 	)
 
 	if err != nil {
@@ -59,16 +65,19 @@ func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 }
 
 func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
-	b.UpdatedAt = time.Now()
+	now := time.Now()
+	b.UpdatedAt = &now
 
 	resp, err := db.Exec(
 		`update builds
 		set
 			build_status = $1,
-			updated_at = $2
+			agent_addr = $2,
+			updated_at = $3
 		where
-			build_id = $3`,
+			build_id = $4`,
 		b.BuildStatus,
+		b.AgentAddr,
 		b.UpdatedAt,
 		b.BuildID,
 	)

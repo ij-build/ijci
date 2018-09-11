@@ -1,5 +1,6 @@
 environment:
-  - WORKSPACE=/go/src/github.com/efritz/ijci
+  - IMPORT_PATH=github.com/efritz/ijci
+  - WORKSPACE=/go/src/${IMPORT_PATH}
   - GO_IMAGE=golang:1.11
   - SKIP_MIGRATE=
 

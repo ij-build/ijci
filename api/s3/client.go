@@ -12,8 +12,8 @@ import (
 
 type (
 	Client interface {
-		Upload(ctx context.Context, name, content string) error
-		Download(ctx context.Context, name string) (string, error)
+		Upload(ctx context.Context, key, content string) error
+		Download(ctx context.Context, key string) (string, error)
 	}
 
 	client struct {

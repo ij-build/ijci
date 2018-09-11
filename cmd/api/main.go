@@ -27,10 +27,8 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 		nacelle.WithInitializerName("amqp-producer"),
 	)
 
-	setupRoutes := chevron.RouteInitializerFunc(resource.SetupRoutes)
-
 	processes.RegisterProcess(
-		basehttp.NewServer(chevron.NewInitializer(setupRoutes)),
+		basehttp.NewServer(chevron.NewInitializer(resource.SetupRoutesFunc)),
 		nacelle.WithProcessName("server"),
 	)
 

@@ -18,7 +18,11 @@ func (i *Initializer) Init(config nacelle.Config) error {
 		return err
 	}
 
-	client := NewClient(apiConfig.APIAddr)
+	client := NewClient(
+		apiConfig.APIAddr,
+		apiConfig.PublicAddr,
+	)
+
 	if err := i.Container.Inject(client); err != nil {
 		return err
 	}

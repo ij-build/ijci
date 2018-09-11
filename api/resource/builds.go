@@ -15,13 +15,12 @@ import (
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/amqp/message"
 	"github.com/efritz/ijci/api/db"
+	"github.com/efritz/ijci/util"
 )
 
 type (
 	BuildsResource struct {
 		*chevron.EmptySpec
-
-		Logger   nacelle.Logger       `service:"logger"`
 		DB       *db.LoggingDB        `service:"db"`
 		Producer *amqpclient.Producer `service:"amqp-producer"`
 	}
@@ -31,11 +30,23 @@ type (
 	}
 )
 
+func (r *BuildsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+	builds, err := db.GetBuilds(r.DB)
+	if err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to build records (%s)", err.Error()),
+		)
+	}
+
+	return response.JSON(builds)
+}
+
 func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
 	requestPayload := &jsonBuildPostPayload{}
 	if err := json.Unmarshal(middleware.GetJSONData(ctx), requestPayload); err != nil {
-		return internalError(
-			r.Logger,
+		return util.InternalError(
+			logger,
 			fmt.Errorf("failed to unmarshal request body (%s)", err.Error()),
 		)
 	}
@@ -48,16 +59,16 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		RepositoryURL: repositoryURL,
 	}
 
-	if err := db.CreateBuild(r.DB, r.Logger, build); err != nil {
-		return internalError(
-			r.Logger,
+	if err := db.CreateBuild(r.DB, logger, build); err != nil {
+		return util.InternalError(
+			logger,
 			fmt.Errorf("failed to create build record (%s)", err.Error()),
 		)
 	}
 
 	if err := r.queueBuild(build); err != nil {
-		return internalError(
-			r.Logger,
+		return util.InternalError(
+			logger,
 			err,
 		)
 	}

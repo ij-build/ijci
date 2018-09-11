@@ -145,7 +145,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aac06e398217761cd8658c060611de59b3b5c15c0f35cf6332605d7a290763ac"
+  digest = "1:d9332557af8b7b5dae4f5123203dc33c314b37677631d0839ea01d2b118d562c"
   name = "github.com/efritz/ij"
   packages = [
     "asset",
@@ -167,7 +167,7 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "4eae3edf475c8c7c0d076cb18ff904d6327dd1aa"
+  revision = "658c0615cd22d766cf7cf780639e8819456b8c2a"
 
 [[projects]]
   branch = "master"
@@ -471,12 +471,12 @@
   revision = "bd5ef7bd5415a7ac448318e64f11a24cd21e594b"
 
 [[projects]]
-  branch = "master"
   digest = "1:41bd4de0a27c0b7affef4083bc8f86501b4c7d891f95809a0fb758a23eb5e78f"
   name = "github.com/xeipuuv/gojsonschema"
   packages = ["."]
   pruneopts = "UT"
   revision = "da425ebb7609ba06a0f395fc8a254d1c303364a0"
+  version = "v1.0"
 
 [[projects]]
   branch = "master"
@@ -630,6 +630,8 @@
   input-imports = [
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/s3",
+    "github.com/aws/aws-sdk-go/service/s3/s3iface",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/efritz/chevron",
     "github.com/efritz/chevron/middleware",

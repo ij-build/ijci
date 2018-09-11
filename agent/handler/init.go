@@ -13,7 +13,12 @@ func NewInitializer() *Initializer {
 }
 
 func (i *Initializer) Init(config nacelle.Config) error {
-	handler := NewHandler()
+	handlerConfig := &Config{}
+	if err := config.Load(handlerConfig); err != nil {
+		return err
+	}
+
+	handler := NewHandler(handlerConfig.ScratchRoot)
 	if err := i.Container.Inject(handler); err != nil {
 		return err
 	}

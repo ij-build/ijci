@@ -1,4 +1,4 @@
-package resource
+package util
 
 import (
 	"net/http"
@@ -9,11 +9,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getBuildID(req *http.Request) uuid.UUID {
+func GetBuildID(req *http.Request) uuid.UUID {
 	return uuid.Must(uuid.Parse(mux.Vars(req)["build_id"]))
 }
 
-func internalError(logger nacelle.Logger, err error) response.Response {
+func GetBuildLogID(req *http.Request) uuid.UUID {
+	return uuid.Must(uuid.Parse(mux.Vars(req)["build_log_id"]))
+}
+
+func InternalError(logger nacelle.Logger, err error) response.Response {
 	logger.Error(
 		"Internal error (%s)",
 		err.Error(),

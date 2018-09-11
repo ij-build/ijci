@@ -12,9 +12,11 @@ import (
 	"github.com/efritz/ij/options"
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
+	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
 
 	"github.com/efritz/ijci/agent/api"
+	"github.com/efritz/ijci/agent/logs"
 	"github.com/efritz/ijci/amqp/message"
 )
 
@@ -24,12 +26,16 @@ type (
 	}
 
 	handler struct {
-		APIClient apiclient.Client `service:"api"`
+		APIClient    apiclient.Client   `service:"api"`
+		LogProcessor *logs.LogProcessor `service:"log-processor"`
+		scratchRoot  string
 	}
 )
 
-func NewHandler() *handler {
-	return &handler{}
+func NewHandler(scratchRoot string) *handler {
+	return &handler{
+		scratchRoot: scratchRoot,
+	}
 }
 
 func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) error {
@@ -55,16 +61,13 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 		)
 	}
 
-	buildLogUploader := func(name, content string) error {
-		err := h.APIClient.UploadBuildLog(message.BuildID, name, content)
-		if err != nil {
-			logger.Error("Failed to upload build log (%s)", err.Error())
-		}
+	err = h.runDefaultPlan(
+		config,
+		directory,
+		message.BuildID,
+	)
 
-		return err
-	}
-
-	if err := h.runDefaultPlan(config, logger, buildLogUploader); err != nil {
+	if err != nil {
 		return fmt.Errorf("build failed (%s)", err.Error())
 	}
 
@@ -84,9 +87,25 @@ func (h *handler) clone(url, directory string, logger nacelle.Logger) error {
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	}
 
-	if _, err := git.PlainClone(directory, false, cloneOptions); err != nil {
+	repo, err := git.PlainClone(directory, false, cloneOptions)
+	if err != nil {
 		return err
 	}
+
+	ref, err := repo.Head()
+	if err != nil {
+		return err
+	}
+
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return err
+	}
+
+	logger.Info(
+		"Cloned repository at commit %s",
+		commit.Hash,
+	)
 
 	return nil
 }
@@ -97,19 +116,26 @@ func (h *handler) loadConfig(directory string) (*config.Config, error) {
 
 func (h *handler) runDefaultPlan(
 	config *config.Config,
-	logger nacelle.Logger,
-	buildLogUploader BuildLogUploader,
+	directory string,
+	buildID uuid.UUID,
 ) error {
-	processor := NewLogProcessor(logger, buildLogUploader)
-
 	fileFactory := func(prefix string) (io.WriteCloser, io.WriteCloser, error) {
-		outFile := processor.NewFile(fmt.Sprintf("%s.out", prefix))
-		errFile := processor.NewFile(fmt.Sprintf("%s.err", prefix))
+		outFile, err := h.LogProcessor.Open(buildID, fmt.Sprintf("%s.out", prefix))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		errFile, err := h.LogProcessor.Open(buildID, fmt.Sprintf("%s.err", prefix))
+		if err != nil {
+			return nil, nil, err
+		}
 
 		return outFile, errFile, nil
 	}
 
 	appOptions := &options.AppOptions{
+		ProjectDir:  directory,
+		ScratchRoot: h.scratchRoot,
 		Colorize:    false,
 		ConfigPath:  "",
 		Env:         nil,

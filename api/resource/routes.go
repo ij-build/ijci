@@ -6,9 +6,11 @@ import (
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
 	"github.com/efritz/nacelle"
+
+	"github.com/efritz/ijci/consts"
 )
 
-const uuidPattern = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}"
+var SetupRoutesFunc = chevron.RouteInitializerFunc(SetupRoutes)
 
 func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewLogging())
@@ -24,7 +26,7 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	)
 
 	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}", uuidPattern),
+		fmt.Sprintf("/builds/{build_id:%s}", consts.PatternUUID),
 		&BuildResource{},
 		chevron.WithMiddlewareFor(
 			middleware.NewSchemaMiddleware("/schemas/build-patch.yaml"),
@@ -33,11 +35,20 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	)
 
 	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}/logs", uuidPattern),
+		fmt.Sprintf("/builds/{build_id:%s}/logs", consts.PatternUUID),
 		&BuildLogsResource{},
 		chevron.WithMiddlewareFor(
 			middleware.NewSchemaMiddleware("/schemas/build-log-post.yaml"),
 			chevron.MethodPost,
+		),
+	)
+
+	router.MustRegister(
+		fmt.Sprintf("/builds/{build_id:%s}/logs/{build_log_id:%s}", consts.PatternUUID, consts.PatternUUID),
+		&BuildLogResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/build-log-patch.yaml"),
+			chevron.MethodPatch,
 		),
 	)
 
