@@ -1,4 +1,4 @@
-package api
+package apiclient
 
 import "github.com/efritz/nacelle"
 

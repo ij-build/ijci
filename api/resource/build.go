@@ -1,4 +1,4 @@
-package http
+package resource
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
 
-	"github.com/efritz/ijci/db"
-	"github.com/efritz/ijci/s3"
+	"github.com/efritz/ijci/api/db"
+	"github.com/efritz/ijci/api/s3"
 )
 
 type (

@@ -3,20 +3,20 @@ package main
 import (
 	"github.com/efritz/nacelle"
 
-	"github.com/efritz/ijci/amqp"
-	"github.com/efritz/ijci/api-client"
-	"github.com/efritz/ijci/handler"
-	"github.com/efritz/ijci/listener"
+	"github.com/efritz/ijci/agent/api"
+	"github.com/efritz/ijci/agent/handler"
+	"github.com/efritz/ijci/agent/listener"
+	"github.com/efritz/ijci/amqp/client"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	processes.RegisterInitializer(
-		amqp.NewConsumerInitializer(),
+		amqpclient.NewConsumerInitializer(),
 		nacelle.WithInitializerName("amqp-consumer"),
 	)
 
 	processes.RegisterInitializer(
-		api.NewInitializer(),
+		apiclient.NewInitializer(),
 		nacelle.WithInitializerName("api-client"),
 	)
 

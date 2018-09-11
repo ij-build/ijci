@@ -1,4 +1,4 @@
-package amqp
+package amqpclient
 
 type AMQPConfig struct {
 	Exchange   string `env:"amqp_exchange" required:"true"`

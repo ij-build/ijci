@@ -1,4 +1,4 @@
-package amqp
+package amqpclient
 
 import (
 	"github.com/efritz/nacelle"

@@ -1,4 +1,4 @@
-package http
+package resource
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 	"github.com/efritz/response"
 	"github.com/google/uuid"
 
-	"github.com/efritz/ijci/amqp"
-	"github.com/efritz/ijci/db"
-	"github.com/efritz/ijci/message"
+	"github.com/efritz/ijci/amqp/client"
+	"github.com/efritz/ijci/amqp/message"
+	"github.com/efritz/ijci/api/db"
 )
 
 type (
 	BuildsResource struct {
 		*chevron.EmptySpec
 
-		Logger   nacelle.Logger `service:"logger"`
-		DB       *db.LoggingDB  `service:"db"`
-		Producer *amqp.Producer `service:"amqp-producer"`
+		Logger   nacelle.Logger       `service:"logger"`
+		DB       *db.LoggingDB        `service:"db"`
+		Producer *amqpclient.Producer `service:"amqp-producer"`
 	}
 
 	jsonBuildPostPayload struct {

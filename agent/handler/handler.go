@@ -14,8 +14,8 @@ import (
 	"github.com/efritz/nacelle"
 	"gopkg.in/src-d/go-git.v4"
 
-	"github.com/efritz/ijci/api-client"
-	"github.com/efritz/ijci/message"
+	"github.com/efritz/ijci/agent/api"
+	"github.com/efritz/ijci/amqp/message"
 )
 
 type (
@@ -24,7 +24,7 @@ type (
 	}
 
 	handler struct {
-		APIClient api.Client `service:"api"`
+		APIClient apiclient.Client `service:"api"`
 	}
 )
 

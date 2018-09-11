@@ -7,7 +7,7 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/rubenv/sql-migrate"
 
-	"github.com/efritz/ijci/db"
+	"github.com/efritz/ijci/api/db"
 )
 
 func main() {

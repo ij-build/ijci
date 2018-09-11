@@ -4,17 +4,17 @@ import (
 	"github.com/efritz/ij/subcommand"
 	"github.com/efritz/nacelle"
 
-	"github.com/efritz/ijci/amqp"
-	"github.com/efritz/ijci/api-client"
-	"github.com/efritz/ijci/handler"
-	"github.com/efritz/ijci/message"
+	"github.com/efritz/ijci/agent/api"
+	"github.com/efritz/ijci/agent/handler"
+	"github.com/efritz/ijci/amqp/client"
+	"github.com/efritz/ijci/amqp/message"
 )
 
 type Listener struct {
-	Logger    nacelle.Logger  `service:"logger"`
-	Consumer  *amqp.Consumer  `service:"amqp-consumer"`
-	Handler   handler.Handler `service:"handler"`
-	APIClient api.Client      `service:"api"`
+	Logger    nacelle.Logger       `service:"logger"`
+	Consumer  *amqpclient.Consumer `service:"amqp-consumer"`
+	Handler   handler.Handler      `service:"handler"`
+	APIClient apiclient.Client     `service:"api"`
 }
 
 func NewListener() *Listener {

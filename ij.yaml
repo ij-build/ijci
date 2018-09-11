@@ -1,6 +1,7 @@
 environment:
   - WORKSPACE=/go/src/github.com/efritz/ijci
   - GO_IMAGE=golang:1.11
+  - SKIP_MIGRATE=
 
 workspace: ${WORKSPACE}
 
@@ -10,16 +11,16 @@ import:
 export:
   files:
     - vendor
-    - api:ijci-api
-    - agent:ijci-agent
-    - migrate:ijci-migrate
+    - ijci-api
+    - ijci-agent
+    - ijci-migrate
 
 tasks:
   install-vendors:
     image: ${GO_IMAGE}
     script: |
       if [ ! -d vendor ]; then
-        echo "installing vendors"
+        echo "Installing vendors"
         go get -u github.com/golang/dep/cmd/dep
         dep ensure
       fi
@@ -27,8 +28,8 @@ tasks:
   go-build:
     image: ${GO_IMAGE}
     script: |
-      echo "building ${APP_NAME} binary"
-      go build ./cmd/${APP_NAME}
+      echo "Building ${APP_NAME} binary"
+      go build -o ijci-${APP_NAME} ./cmd/${APP_NAME}
     environment:
       - GOOS=linux
       - GOARCH=amd64
@@ -54,6 +55,7 @@ plans:
             environment: APP_NAME=agent
           - name: go-build
             environment: APP_NAME=migrate
+            disabled: ${SKIP_MIGRATE}
         parallel: true
 
   build-images:

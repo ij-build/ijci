@@ -5,10 +5,10 @@ import (
 	"github.com/efritz/nacelle"
 	basehttp "github.com/efritz/nacelle/base/http"
 
-	"github.com/efritz/ijci/amqp"
-	"github.com/efritz/ijci/db"
-	"github.com/efritz/ijci/http"
-	"github.com/efritz/ijci/s3"
+	"github.com/efritz/ijci/amqp/client"
+	"github.com/efritz/ijci/api/db"
+	"github.com/efritz/ijci/api/resource"
+	"github.com/efritz/ijci/api/s3"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
@@ -23,11 +23,11 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 	)
 
 	processes.RegisterInitializer(
-		amqp.NewProducerInitializer(),
+		amqpclient.NewProducerInitializer(),
 		nacelle.WithInitializerName("amqp-producer"),
 	)
 
-	setupRoutes := chevron.RouteInitializerFunc(http.SetupRoutes)
+	setupRoutes := chevron.RouteInitializerFunc(resource.SetupRoutes)
 
 	processes.RegisterProcess(
 		basehttp.NewServer(chevron.NewInitializer(setupRoutes)),
