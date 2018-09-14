@@ -68,7 +68,8 @@ services:
 
   minio:
     image: minio/minio
-    command: server /data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/build-logs && /usr/bin/minio server /data'
     environment:
       - MINIO_ACCESS_KEY=XCJ8Jwy7eUqqwJfv9DJJ
       - MINIO_SECRET_KEY=urx4H3kAS5zpKSLf7wVXGDvFYxCNdHbVcndNRvWZ
