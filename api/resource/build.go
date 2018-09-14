@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -22,8 +23,13 @@ type (
 	}
 
 	jsonBuildPatchPayload struct {
-		BuildStatus string `json:"build_status"`
-		AgentAddr   string `json:"agent_addr"`
+		BuildStatus       *string    `json:"build_status"`
+		AgentAddr         *string    `json:"agent_addr"`
+		CommitAuthorName  *string    `json:"commit_author_name"`
+		CommitAuthorEmail *string    `json:"commit_author_email"`
+		CommittedAt       *time.Time `json:"committed_at"`
+		CommitHash        *string    `json:"commit_hash"`
+		CommitMessage     *string    `json:"commit_message"`
 	}
 )
 
@@ -61,8 +67,25 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	build.BuildStatus = payload.BuildStatus
-	build.AgentAddr = &payload.AgentAddr
+	if payload.BuildStatus != nil {
+		if justStarted(build.BuildStatus, *payload.BuildStatus) {
+			now := time.Now()
+			build.StartedAt = &now
+		}
+
+		if justCompleted(build.BuildStatus, *payload.BuildStatus) {
+			now := time.Now()
+			build.CompletedAt = &now
+		}
+	}
+
+	build.BuildStatus = orString(payload.BuildStatus, build.BuildStatus)
+	build.AgentAddr = orString(payload.AgentAddr, build.AgentAddr)
+	build.CommitAuthorName = orString(payload.CommitAuthorName, build.CommitAuthorName)
+	build.CommitAuthorEmail = orString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
+	build.CommittedAt = orString(payload.CommittedAt, build.CommittedAt)
+	build.CommitHash = orString(payload.CommitHash, build.CommitHash)
+	build.CommitMessage = orString(payload.CommitMessage, build.CommitMessage)
 
 	if err := db.UpdateBuild(r.DB, logger, build); err != nil {
 		return util.InternalError(
@@ -72,4 +95,27 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 	}
 
 	return response.JSON(build)
+}
+
+//
+// Helpers
+
+func justStarted(oldStatus, newStatus string) bool {
+	return newStatus == "in-progress" && oldStatus != "in-progress"
+}
+
+func justCompleted(oldStatus, newStatus string) bool {
+	return isTerminal(newStatus) && !isTerminal(oldStatus)
+}
+
+func isTerminal(buildStatus string) bool {
+	return buildStatus != "queued" && buildStatus != "in-progress"
+}
+
+func orString(newVal *string, oldVal string) string {
+	if newVal != nil {
+		return *newVal
+	}
+
+	return oldVal
 }

@@ -65,7 +65,11 @@ func (l *Listener) handle(payload []byte) error {
 		"build_id": message.BuildID,
 	})
 
-	if err := l.APIClient.UpdateBuildStatus(message.BuildID, "in-progress"); err != nil {
+	initialStatus := "in-progress"
+
+	if err := l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+		BuildStatus: &initialStatus,
+	}); err != nil {
 		return err
 	}
 
@@ -74,7 +78,9 @@ func (l *Listener) handle(payload []byte) error {
 	status := getStatus(err)
 	logger.Info("Build completed with status %s", status)
 
-	return l.APIClient.UpdateBuildStatus(message.BuildID, status)
+	return l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+		BuildStatus: &status,
+	})
 }
 
 //

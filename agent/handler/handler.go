@@ -14,6 +14,7 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
 	"github.com/efritz/ijci/agent/api"
 	"github.com/efritz/ijci/agent/logs"
@@ -46,11 +47,29 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 
 	defer os.RemoveAll(directory)
 
-	if err := h.clone(message.RepositoryURL, directory, logger); err != nil {
+	commit, err := h.clone(message.RepositoryURL, directory, logger)
+	if err != nil {
 		return fmt.Errorf(
 			"failed to clone repository (%s)",
 			err.Error(),
 		)
+	}
+
+	commitHash := commit.Hash.String()
+
+	logger.Info(
+		"Cloned repository at commit %s",
+		commitHash,
+	)
+
+	if err := h.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+		CommitAuthorName:  &commit.Author.Name,
+		CommitAuthorEmail: &commit.Author.Email,
+		CommitedAt:        &commit.Author.When,
+		CommitHash:        &commitHash,
+		CommitMessage:     &commit.Message,
+	}); err != nil {
+		return err
 	}
 
 	config, err := h.loadConfig(directory)
@@ -75,7 +94,7 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	return nil
 }
 
-func (h *handler) clone(url, directory string, logger nacelle.Logger) error {
+func (h *handler) clone(url, directory string, logger nacelle.Logger) (*object.Commit, error) {
 	logger.Info(
 		"Cloning repository %s into %s",
 		url,
@@ -89,25 +108,15 @@ func (h *handler) clone(url, directory string, logger nacelle.Logger) error {
 
 	repo, err := git.PlainClone(directory, false, cloneOptions)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	ref, err := repo.Head()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	commit, err := repo.CommitObject(ref.Hash())
-	if err != nil {
-		return err
-	}
-
-	logger.Info(
-		"Cloned repository at commit %s",
-		commit.Hash,
-	)
-
-	return nil
+	return repo.CommitObject(ref.Hash())
 }
 
 func (h *handler) loadConfig(directory string) (*config.Config, error) {

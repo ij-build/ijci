@@ -9,7 +9,14 @@ properties:
       - succeeded
   agent_addr:
     type: string
+  commit_author_name:
+    type: string
+  commit_author_email:
+    type: string
+  committed_at:
+    type: string
+  commit_hash:
+    type: string
+  commit_message:
+    type: string
 additionalProperties: false
-required:
-  - build_status
-  - agent_addr

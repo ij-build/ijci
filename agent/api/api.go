@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/efritz/nacelle"
 	"github.com/google/uuid"
@@ -13,9 +14,19 @@ import (
 
 type (
 	Client interface {
-		UpdateBuildStatus(buildID uuid.UUID, status string) error
+		UpdateBuild(buildID uuid.UUID, payload *BuildPayload) error
 		OpenBuildLog(buildID uuid.UUID, prefix string) (uuid.UUID, error)
 		UploadBuildLog(buildID, buildLogID uuid.UUID, content string) error
+	}
+
+	BuildPayload struct {
+		BuildStatus       *string    `json:"build_status,omitempty"`
+		AgentAddr         *string    `json:"agent_addr,omitempty"`
+		CommitAuthorName  *string    `json:"commit_author_name,omitempty"`
+		CommitAuthorEmail *string    `json:"commit_author_email,omitempty"`
+		CommitedAt        *time.Time `json:"committed_at,omitempty"`
+		CommitHash        *string    `json:"commit_hash,omitempty"`
+		CommitMessage     *string    `json:"commit_message,omitempty"`
 	}
 
 	client struct {
@@ -33,19 +44,17 @@ func NewClient(apiAddr, publicAddr string) *client {
 	}
 }
 
-func (c *client) UpdateBuildStatus(buildID uuid.UUID, status string) error {
+func (c *client) UpdateBuild(buildID uuid.UUID, payload *BuildPayload) error {
 	logger := c.Logger.WithFields(nacelle.LogFields{
 		"build_id": buildID,
 	})
 
-	logger.Info("Updating build status")
+	// Always update this
+	payload.AgentAddr = &c.publicAddr
 
-	_, err := c.do("PATCH", fmt.Sprintf("/builds/%s", buildID), map[string]interface{}{
-		"build_status": status,
-		"agent_addr":   c.publicAddr,
-	})
-
-	logger.Info("Updated build status")
+	logger.Info("Updating build")
+	_, err := c.do("PATCH", fmt.Sprintf("/builds/%s", buildID), payload)
+	logger.Info("Updated build")
 	return err
 }
 

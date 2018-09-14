@@ -12,8 +12,14 @@ create table builds (
     repository_url text not null,
     build_status build_status not null,
     agent_addr text,
+    commit_author_name text,
+    commit_author_email text,
+    committed_at timestamp with time zone,
+    commit_hash text,
+    commit_message text,
     created_at timestamp with time zone not null,
-    updated_at timestamp with time zone
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone
 );
 
 create table build_logs (
