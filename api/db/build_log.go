@@ -20,7 +20,7 @@ type BuildLog struct {
 
 func GetBuildLogs(db sqlx.Queryer, buildID uuid.UUID) ([]*BuildLog, error) {
 	buildLogs := []*BuildLog{}
-	if err := sqlx.Select(db, &buildLogs, `select * from build_logs where build_id = $1`, buildID); err != nil {
+	if err := sqlx.Select(db, &buildLogs, `select * from build_logs where build_id = $1 order by created_at`, buildID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
