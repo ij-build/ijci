@@ -9,6 +9,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func GetProjectID(req *http.Request) uuid.UUID {
+	return uuid.Must(uuid.Parse(mux.Vars(req)["project_id"]))
+}
+
 func GetBuildID(req *http.Request) uuid.UUID {
 	return uuid.Must(uuid.Parse(mux.Vars(req)["build_id"]))
 }

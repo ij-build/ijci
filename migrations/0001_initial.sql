@@ -7,9 +7,15 @@ create type build_status as enum (
     'succeeded'
 );
 
+create table projects (
+    project_id uuid primary key,
+    name text unique,
+    repository_url text not null unique
+);
+
 create table builds (
     build_id uuid primary key,
-    repository_url text not null,
+    project_id uuid not null references projects on delete cascade,
     build_status build_status not null,
     agent_addr text,
     commit_author_name text,
@@ -21,6 +27,10 @@ create table builds (
     started_at timestamp with time zone,
     completed_at timestamp with time zone
 );
+
+alter table projects add column last_build_id uuid references builds;
+alter table projects add column last_build_status build_status;
+alter table projects add column last_build_completed_at timestamp with time zone;
 
 create table build_logs (
     build_log_id uuid primary key,
@@ -34,5 +44,6 @@ create table build_logs (
 -- +migrate Down
 drop table build_logs;
 drop table builds;
+drop table projects;
 
 drop type build_status;

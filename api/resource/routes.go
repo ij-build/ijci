@@ -17,6 +17,16 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewRequestID())
 
 	router.MustRegister(
+		"/projects",
+		&ProjectsResource{},
+	)
+
+	router.MustRegister(
+		fmt.Sprintf("/projects/{project_id:%s}", consts.PatternUUID),
+		&ProjectResource{},
+	)
+
+	router.MustRegister(
 		"/builds",
 		&BuildsResource{},
 		chevron.WithMiddlewareFor(
