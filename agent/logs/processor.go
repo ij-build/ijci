@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/efritz/nacelle"
@@ -17,6 +18,7 @@ type (
 		APIClient       apiclient.Client `service:"api"`
 		Logger          nacelle.Logger   `service:"logger"`
 		activeBuildLogs map[[32]byte]*fileEntry
+		mutex           sync.Mutex
 	}
 
 	fileEntry struct {
@@ -53,10 +55,14 @@ func (p *LogProcessor) Open(buildID uuid.UUID, prefix string) (io.WriteCloser, e
 		prefix,
 	)
 
-	p.activeBuildLogs[hashKey(buildID, buildLogID)] = &fileEntry{
+	entry := &fileEntry{
 		file:   file,
 		closed: make(chan struct{}),
 	}
+
+	p.mutex.Lock()
+	p.activeBuildLogs[hashKey(buildID, buildLogID)] = entry
+	p.mutex.Unlock()
 
 	return file, nil
 }
@@ -70,13 +76,16 @@ func (p *LogProcessor) close(buildID, buildLogID uuid.UUID, content string) erro
 		)
 	}
 
-	// Remove record from active list
 	key := hashKey(buildID, buildLogID)
-	entry := p.activeBuildLogs[key]
-	delete(p.activeBuildLogs, key)
 
-	// Close listeners
-	close(entry.closed)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	if entry, ok := p.activeBuildLogs[key]; ok {
+		close(entry.closed)
+		delete(p.activeBuildLogs, key)
+	}
+
 	return nil
 }
 
