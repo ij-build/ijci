@@ -30,7 +30,7 @@ func (r *BuildLogResource) Get(ctx context.Context, req *http.Request, logger na
 	if err != nil {
 		cancel()
 
-		if err != logs.ErrUnknownBuildLog {
+		if err == logs.ErrUnknownBuildLog {
 			return response.Empty(http.StatusNotFound)
 		}
 
