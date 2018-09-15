@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/efritz/nacelle"
@@ -9,52 +8,104 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type Build struct {
-	BuildID           uuid.UUID  `db:"build_id" json:"build_id"`
-	RepositoryURL     string     `db:"repository_url" json:"repository_url"`
-	BuildStatus       string     `db:"build_status" json:"build_status"`
-	AgentAddr         *string    `db:"agent_addr" json:"agent_addr"`
-	CommitAuthorName  *string    `db:"commit_author_name" json:"commit_author_name"`
-	CommitAuthorEmail *string    `db:"commit_author_email" json:"commit_author_email"`
-	CommittedAt       *time.Time `db:"committed_at" json:"committed_at"`
-	CommitHash        *string    `db:"commit_hash" json:"commit_hash"`
-	CommitMessage     *string    `db:"commit_message" json:"commit_message"`
-	CreatedAt         time.Time  `db:"created_at" json:"created_at"`
-	StartedAt         *time.Time `db:"started_at" json:"started_at"`
-	CompletedAt       *time.Time `db:"completed_at" json:"completed_at"`
-}
+type (
+	Build struct {
+		BuildID           uuid.UUID  `db:"build_id" json:"build_id"`
+		ProjectID         uuid.UUID  `db:"project_id" json:"project_id"`
+		BuildStatus       string     `db:"build_status" json:"build_status"`
+		AgentAddr         *string    `db:"agent_addr" json:"agent_addr"`
+		CommitAuthorName  *string    `db:"commit_author_name" json:"commit_author_name"`
+		CommitAuthorEmail *string    `db:"commit_author_email" json:"commit_author_email"`
+		CommittedAt       *time.Time `db:"committed_at" json:"committed_at"`
+		CommitHash        *string    `db:"commit_hash" json:"commit_hash"`
+		CommitMessage     *string    `db:"commit_message" json:"commit_message"`
+		CreatedAt         time.Time  `db:"created_at" json:"created_at"`
+		StartedAt         *time.Time `db:"started_at" json:"started_at"`
+		CompletedAt       *time.Time `db:"completed_at" json:"completed_at"`
+	}
 
-func GetBuilds(db sqlx.Queryer) ([]*Build, error) {
-	builds := []*Build{}
-	if err := sqlx.Select(db, &builds, `select * from builds order by created_at desc`); err != nil {
+	BuildWithProject struct {
+		*Build
+		Project *Project `db:"project" json:"project"`
+	}
+
+	BuildWithLogs struct {
+		*BuildWithProject
+		BuildLogs []*BuildLog `json:"build_logs"`
+	}
+)
+
+func GetBuilds(db sqlx.Queryer) ([]*BuildWithProject, error) {
+	query := `
+	select
+		builds.*,
+		projects.project_id "project.project_id",
+		projects.name "project.name",
+		projects.repository_url "project.repository_url",
+		projects.last_build_id "project.last_build_id",
+		projects.last_build_status "project.last_build_status",
+		projects.last_build_completed_at "project.last_build_completed_at"
+	from builds
+	join projects on builds.project_id = projects.project_id
+	order by created_at desc
+	`
+
+	builds := []*BuildWithProject{}
+	if err := sqlx.Select(db, &builds, query); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
 	return builds, nil
 }
 
-func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*Build, error) {
-	b := &Build{}
-	if err := sqlx.Get(db, b, `select * from builds where build_id = $1`, buildID); err != nil {
+func GetBuildsForProject(db sqlx.Queryer, projectID uuid.UUID) ([]*Build, error) {
+	query := `select * from builds where project_id = $1 order by created_at desc`
+
+	builds := []*Build{}
+	if err := sqlx.Select(db, &builds, query, projectID); err != nil {
+		return nil, handlePostgresError(err, "select error")
+	}
+
+	return builds, nil
+}
+
+func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*BuildWithProject, error) {
+	query := `
+	select
+		builds.*,
+		projects.project_id "project.project_id",
+		projects.name "project.name",
+		projects.repository_url "project.repository_url",
+		projects.last_build_id "project.last_build_id",
+		projects.last_build_status "project.last_build_status",
+		projects.last_build_completed_at "project.last_build_completed_at"
+	from builds
+	join projects on builds.project_id = projects.project_id
+	where build_id = $1
+	`
+
+	b := &BuildWithProject{}
+	if err := sqlx.Get(db, b, query, buildID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
 	return b, nil
 }
 
-func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
-	b.BuildStatus = "queued"
-	b.CreatedAt = time.Now()
+func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *BuildWithProject) error {
+	query := `
+	insert into builds (
+		build_id,
+		project_id,
+		build_status,
+		created_at
+	) values ($1, $2, $3, $4)
+	`
 
 	_, err := db.Exec(
-		`insert into builds (
-			build_id,
-			repository_url,
-			build_status,
-			created_at
-		) values ($1, $2, $3, $4)`,
-		b.BuildID,
-		b.RepositoryURL,
+		query,
+		b.Build.BuildID,
+		b.Project.ProjectID,
 		b.BuildStatus,
 		b.CreatedAt,
 	)
@@ -71,20 +122,33 @@ func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 }
 
 func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
-	resp, err := db.Exec(
-		`update builds
-		set
-			build_status = $1,
-			agent_addr = $2,
-			commit_author_name = $3,
-			commit_author_email = $4,
-			committed_at = $5,
-			commit_hash = $6,
-			commit_message = $7,
-			started_at = $8,
-			completed_at = $9
-		where
-			build_id = $10`,
+	buildsQuery := `
+	update builds
+	set
+		build_status = $1,
+		agent_addr = $2,
+		commit_author_name = $3,
+		commit_author_email = $4,
+		committed_at = $5,
+		commit_hash = $6,
+		commit_message = $7,
+		started_at = $8,
+		completed_at = $9
+	where
+		build_id = $10
+	`
+
+	projectsQuery := `
+	update projects
+	set
+		last_build_id = $1,
+		last_build_status = $2,
+		last_build_completed_at = $3
+	where project_id = $4
+	`
+
+	_, err := db.Exec(
+		buildsQuery,
 		b.BuildStatus,
 		b.AgentAddr,
 		b.CommitAuthorName,
@@ -101,13 +165,18 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 		return handlePostgresError(err, "update error")
 	}
 
-	ra, err := resp.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows (%s)", err.Error())
-	}
+	// TODO - do in a transaction
 
-	if ra == 0 {
-		return ErrDoesNotExist
+	_, err = db.Exec(
+		projectsQuery,
+		b.BuildID,
+		b.BuildStatus,
+		b.CompletedAt,
+		b.ProjectID,
+	)
+
+	if err != nil {
+		return handlePostgresError(err, "update error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{

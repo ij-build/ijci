@@ -19,8 +19,10 @@ type BuildLog struct {
 }
 
 func GetBuildLogs(db sqlx.Queryer, buildID uuid.UUID) ([]*BuildLog, error) {
+	query := `select * from build_logs where build_id = $1 order by created_at`
+
 	buildLogs := []*BuildLog{}
-	if err := sqlx.Select(db, &buildLogs, `select * from build_logs where build_id = $1 order by created_at`, buildID); err != nil {
+	if err := sqlx.Select(db, &buildLogs, query, buildID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
@@ -28,15 +30,10 @@ func GetBuildLogs(db sqlx.Queryer, buildID uuid.UUID) ([]*BuildLog, error) {
 }
 
 func GetBuildLog(db sqlx.Queryer, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
-	buildLog := &BuildLog{}
+	query := `select * from build_logs where build_id = $1 AND build_log_id = $2`
 
-	if err := sqlx.Get(
-		db,
-		buildLog,
-		`select * from build_logs where build_id = $1 AND build_log_id = $2`,
-		buildID,
-		buildLogID,
-	); err != nil {
+	buildLog := &BuildLog{}
+	if err := sqlx.Get(db, buildLog, query, buildID, buildLogID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
@@ -44,15 +41,17 @@ func GetBuildLog(db sqlx.Queryer, buildID, buildLogID uuid.UUID) (*BuildLog, err
 }
 
 func CreateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
-	l.CreatedAt = time.Now()
+	query := `
+	insert into build_logs (
+		build_log_id,
+		build_id,
+		name,
+		created_at
+	) values ($1, $2, $3, $4)
+	`
 
 	_, err := db.Exec(
-		`insert into build_logs (
-			build_log_id,
-			build_id,
-			name,
-			created_at
-		) values ($1, $2, $3, $4)`,
+		query,
 		l.BuildLogID,
 		l.BuildID,
 		l.Name,
@@ -72,16 +71,17 @@ func CreateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
 }
 
 func UpdateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
-	now := time.Now()
-	l.UploadedAt = &now
+	query := `
+	update build_logs
+	set
+		key = $1,
+		uploaded_at = $2
+	where
+		build_log_id = $3
+	`
 
 	resp, err := db.Exec(
-		`update build_logs
-		set
-			key = $1,
-			uploaded_at = $2
-		where
-			build_log_id = $3`,
+		query,
 		l.Key,
 		l.UploadedAt,
 		l.BuildLogID,

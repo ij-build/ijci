@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -53,7 +54,11 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 		return resp
 	}
 
+	now := time.Now()
 	key := buildLog.BuildLogID.String()
+
+	buildLog.Key = &key
+	buildLog.UploadedAt = &now
 
 	if err := r.S3.Upload(ctx, key, payload.Content); err != nil {
 		return util.InternalError(
@@ -62,8 +67,6 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
-	buildLog.Key = &key
-
 	if err := db.UpdateBuildLog(r.DB, logger, buildLog); err != nil {
 		return util.InternalError(
 			logger,
@@ -71,9 +74,9 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
-	resp = response.JSON(buildLog)
-	resp.SetStatusCode(http.StatusCreated)
-	return resp
+	return response.JSON(map[string]interface{}{
+		"build_log": buildLog,
+	}).SetStatusCode(http.StatusCreated)
 }
 
 func (r *BuildLogResource) getContentFromS3(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {

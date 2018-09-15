@@ -48,8 +48,7 @@ func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacel
 	}
 
 	return response.JSON(map[string]interface{}{
-		"build":      build,
-		"build_logs": buildLogs,
+		"build": &db.BuildWithLogs{build, buildLogs},
 	})
 }
 
@@ -77,24 +76,27 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 			now := time.Now()
 			build.CompletedAt = &now
 		}
+
+		build.BuildStatus = *payload.BuildStatus
 	}
 
-	build.BuildStatus = orString(payload.BuildStatus, build.BuildStatus)
 	build.AgentAddr = orString(payload.AgentAddr, build.AgentAddr)
 	build.CommitAuthorName = orString(payload.CommitAuthorName, build.CommitAuthorName)
 	build.CommitAuthorEmail = orString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
-	build.CommittedAt = orString(payload.CommittedAt, build.CommittedAt)
+	build.CommittedAt = orTime(payload.CommittedAt, build.CommittedAt)
 	build.CommitHash = orString(payload.CommitHash, build.CommitHash)
 	build.CommitMessage = orString(payload.CommitMessage, build.CommitMessage)
 
-	if err := db.UpdateBuild(r.DB, logger, build); err != nil {
+	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(
 			logger,
 			fmt.Errorf("failed to update build (%s)", err.Error()),
 		)
 	}
 
-	return response.JSON(build)
+	return response.JSON(map[string]interface{}{
+		"build": build,
+	})
 }
 
 //
@@ -112,9 +114,17 @@ func isTerminal(buildStatus string) bool {
 	return buildStatus != "queued" && buildStatus != "in-progress"
 }
 
-func orString(newVal *string, oldVal string) string {
+func orString(newVal, oldVal *string) *string {
 	if newVal != nil {
-		return *newVal
+		return newVal
+	}
+
+	return oldVal
+}
+
+func orTime(newVal, oldVal *time.Time) *time.Time {
+	if newVal != nil {
+		return newVal
 	}
 
 	return oldVal

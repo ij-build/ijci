@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -35,28 +36,39 @@ func (r *BuildsResource) Get(ctx context.Context, req *http.Request, logger nace
 	if err != nil {
 		return util.InternalError(
 			logger,
-			fmt.Errorf("failed to build records (%s)", err.Error()),
+			fmt.Errorf("failed to fetch build records (%s)", err.Error()),
 		)
 	}
 
-	return response.JSON(builds)
+	return response.JSON(map[string]interface{}{
+		"builds": builds,
+	})
 }
 
 func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	requestPayload := &jsonBuildPostPayload{}
-	if err := json.Unmarshal(middleware.GetJSONData(ctx), requestPayload); err != nil {
+	payload := &jsonBuildPostPayload{}
+	if err := json.Unmarshal(middleware.GetJSONData(ctx), payload); err != nil {
 		return util.InternalError(
 			logger,
 			fmt.Errorf("failed to unmarshal request body (%s)", err.Error()),
 		)
 	}
 
-	buildID := uuid.New()
-	repositoryURL := requestPayload.RepositoryURL
+	project, err := db.GetOrCreateProject(r.DB, logger, payload.RepositoryURL)
+	if err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to create project record (%s)", err.Error()),
+		)
+	}
 
-	build := &db.Build{
-		BuildID:       buildID,
-		RepositoryURL: repositoryURL,
+	build := &db.BuildWithProject{
+		Project: project,
+		Build: &db.Build{
+			BuildID:     uuid.New(),
+			BuildStatus: "queued",
+			CreatedAt:   time.Now(),
+		},
 	}
 
 	if err := db.CreateBuild(r.DB, logger, build); err != nil {
@@ -73,16 +85,19 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	resp := response.JSON(build)
+	resp := response.JSON(map[string]interface{}{
+		"build": build,
+	})
+
 	resp.SetStatusCode(http.StatusCreated)
-	resp.SetHeader("Location", fmt.Sprintf("/builds/%s", buildID))
+	resp.SetHeader("Location", fmt.Sprintf("/builds/%s", build.BuildID))
 	return resp
 }
 
-func (r *BuildsResource) queueBuild(build *db.Build) error {
+func (r *BuildsResource) queueBuild(build *db.BuildWithProject) error {
 	message := &message.BuildMessage{
 		BuildID:       build.BuildID,
-		RepositoryURL: build.RepositoryURL,
+		RepositoryURL: build.Project.RepositoryURL,
 	}
 
 	if err := r.Producer.Publish(message); err != nil {

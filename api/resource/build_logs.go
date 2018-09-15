@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -53,6 +54,7 @@ func (r *BuildLogsResource) Post(ctx context.Context, req *http.Request, logger 
 		BuildLogID: uuid.New(),
 		BuildID:    build.BuildID,
 		Name:       payload.Name,
+		CreatedAt:  time.Now(),
 	}
 
 	if err := db.CreateBuildLog(r.DB, logger, buildLog); err != nil {
@@ -62,7 +64,7 @@ func (r *BuildLogsResource) Post(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
-	resp := response.JSON(buildLog)
-	resp.SetStatusCode(http.StatusCreated)
-	return resp
+	return response.JSON(map[string]interface{}{
+		"build_log": buildLog,
+	}).SetStatusCode(http.StatusCreated)
 }
