@@ -36,10 +36,7 @@ func (r *BuildLogResource) Get(ctx context.Context, req *http.Request, logger na
 		}
 	}
 
-	return util.InternalError(
-		logger,
-		fmt.Errorf("failed to locate build log content"),
-	)
+	return response.Empty(http.StatusNotFound)
 }
 
 func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
