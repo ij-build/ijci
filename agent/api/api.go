@@ -34,6 +34,14 @@ type (
 		apiAddr    string
 		publicAddr string
 	}
+
+	jsonBuildLog struct {
+		BuildLogID uuid.UUID `json:"build_log_id"`
+	}
+
+	jsonBuildLogEnvelope struct {
+		BuildLog *jsonBuildLog `json:"build_log"`
+	}
 )
 
 func NewClient(apiAddr, publicAddr string) *client {
@@ -73,11 +81,8 @@ func (c *client) OpenBuildLog(buildID uuid.UUID, prefix string) (uuid.UUID, erro
 		return uuid.Nil, err
 	}
 
-	payload := struct {
-		BuildLogID uuid.UUID `json:"build_log_id"`
-	}{}
-
-	if err := json.Unmarshal(resp, &payload); err != nil {
+	payload := &jsonBuildLog{}
+	if err := json.Unmarshal(resp, &jsonBuildLogEnvelope{payload}); err != nil {
 		return uuid.Nil, fmt.Errorf("failed to unmarshal response (%s)", err.Error())
 	}
 
