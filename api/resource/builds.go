@@ -27,7 +27,10 @@ type (
 	}
 
 	jsonBuildPostPayload struct {
-		RepositoryURL string `json:"repository_url"`
+		ProjectID     *string `json:"project_id"`
+		RepositoryURL *string `json:"repository_url"`
+		CommitBranch  *string `json:"commit_branch"`
+		CommitHash    *string `json:"commit_hash"`
 	}
 )
 
@@ -54,7 +57,7 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	project, err := db.GetOrCreateProject(r.DB, logger, payload.RepositoryURL)
+	project, err := r.getProject(payload.ProjectID, payload.RepositoryURL, logger)
 	if err != nil {
 		return util.InternalError(
 			logger,
@@ -65,9 +68,11 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 	build := &db.BuildWithProject{
 		Project: project,
 		Build: &db.Build{
-			BuildID:     uuid.New(),
-			BuildStatus: "queued",
-			CreatedAt:   time.Now(),
+			BuildID:      uuid.New(),
+			CommitBranch: payload.CommitBranch,
+			CommitHash:   payload.CommitHash,
+			BuildStatus:  "queued",
+			CreatedAt:    time.Now(),
 		},
 	}
 
@@ -94,10 +99,25 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 	return resp
 }
 
+func (r *BuildsResource) getProject(projectID, repositoryURL *string, logger nacelle.Logger) (*db.Project, error) {
+	if projectID != nil {
+		project, err := db.GetProject(r.DB, uuid.Must(uuid.Parse(*projectID)))
+		if err != nil {
+			return nil, err
+		}
+
+		return project.Project, nil
+	}
+
+	return db.GetOrCreateProject(r.DB, logger, *repositoryURL)
+}
+
 func (r *BuildsResource) queueBuild(build *db.BuildWithProject) error {
 	message := &message.BuildMessage{
 		BuildID:       build.BuildID,
 		RepositoryURL: build.Project.RepositoryURL,
+		CommitBranch:  orString(build.CommitBranch, ""),
+		CommitHash:    orString(build.CommitHash, ""),
 	}
 
 	if err := r.Producer.Publish(message); err != nil {

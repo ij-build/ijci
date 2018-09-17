@@ -14,6 +14,7 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
 	"github.com/efritz/ijci/agent/api"
@@ -47,7 +48,14 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 
 	defer os.RemoveAll(directory)
 
-	commit, err := h.clone(message.RepositoryURL, directory, logger)
+	commit, err := h.clone(
+		message.RepositoryURL,
+		message.CommitBranch,
+		message.CommitHash,
+		directory,
+		logger,
+	)
+
 	if err != nil {
 		return fmt.Errorf(
 			"failed to clone repository (%s)",
@@ -58,7 +66,8 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	commitHash := commit.Hash.String()
 
 	logger.Info(
-		"Cloned repository at commit %s",
+		"Cloned repository branch %s at %s",
+		message.CommitBranch,
 		commitHash,
 	)
 
@@ -98,7 +107,7 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	return nil
 }
 
-func (h *handler) clone(url, directory string, logger nacelle.Logger) (*object.Commit, error) {
+func (h *handler) clone(url, branch, hash, directory string, logger nacelle.Logger) (*object.Commit, error) {
 	logger.Info(
 		"Cloning repository %s into %s",
 		url,
@@ -107,12 +116,29 @@ func (h *handler) clone(url, directory string, logger nacelle.Logger) (*object.C
 
 	cloneOptions := &git.CloneOptions{
 		URL:               url,
+		ReferenceName:     plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch)),
+		SingleBranch:      true,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	}
 
 	repo, err := git.PlainClone(directory, false, cloneOptions)
 	if err != nil {
 		return nil, err
+	}
+
+	if hash != "" {
+		worktree, err := repo.Worktree()
+		if err != nil {
+			return nil, err
+		}
+
+		checkoutOptions := &git.CheckoutOptions{
+			Hash: plumbing.NewHash(hash),
+		}
+
+		if err := worktree.Checkout(checkoutOptions); err != nil {
+			return nil, err
+		}
 	}
 
 	ref, err := repo.Head()
