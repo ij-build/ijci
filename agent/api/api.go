@@ -31,6 +31,7 @@ type (
 		CommitCommitterName  *string    `json:"commit_committer_name,omitempty"`
 		CommitCommitterEmail *string    `json:"commit_committer_email,omitempty"`
 		CommitCommitedAt     *time.Time `json:"commit_committed_at,omitempty"`
+		ErrorMessage         *string    `json:"error_message,omitempty"`
 	}
 
 	client struct {

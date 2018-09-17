@@ -34,6 +34,7 @@ type (
 		CommitCommitterName  *string    `json:"commit_committer_name"`
 		CommitCommitterEmail *string    `json:"commit_committer_email"`
 		CommitCommittedAt    *time.Time `json:"commit_committed_at"`
+		ErrorMessage         *string    `json:"error_message"`
 	}
 )
 
@@ -94,6 +95,7 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 	build.CommitCommitterName = orOptionalString(payload.CommitCommitterName, build.CommitCommitterName)
 	build.CommitCommitterEmail = orOptionalString(payload.CommitCommitterEmail, build.CommitCommitterEmail)
 	build.CommitCommittedAt = orOptionalTime(payload.CommitCommittedAt, build.CommitCommittedAt)
+	build.ErrorMessage = orOptionalString(payload.ErrorMessage, build.ErrorMessage)
 
 	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(

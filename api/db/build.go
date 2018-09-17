@@ -23,6 +23,7 @@ type (
 		CommitCommitterName  *string    `db:"commit_committer_name" json:"commit_committer_name"`
 		CommitCommitterEmail *string    `db:"commit_committer_email" json:"commit_committer_email"`
 		CommitCommittedAt    *time.Time `db:"commit_committed_at" json:"commit_committed_at"`
+		ErrorMessage         *string    `db:"error_message" json:"error_message"`
 		CreatedAt            time.Time  `db:"created_at" json:"created_at"`
 		StartedAt            *time.Time `db:"started_at" json:"started_at"`
 		CompletedAt          *time.Time `db:"completed_at" json:"completed_at"`
@@ -140,10 +141,11 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 		commit_committer_name = $9,
 		commit_committer_email = $10,
 		commit_committed_at = $11,
+		error_message = $12,
 		started_at = $13,
 		completed_at = $14
 	where
-		build_id = $10
+		build_id = $15
 	`
 
 	projectsQuery := `

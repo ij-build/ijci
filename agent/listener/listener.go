@@ -79,7 +79,8 @@ func (l *Listener) handle(payload []byte) error {
 	logger.Info("Build completed with status %s", status)
 
 	return l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
-		BuildStatus: &status,
+		BuildStatus:  &status,
+		ErrorMessage: getErrorMessage(err),
 	})
 }
 
@@ -96,4 +97,13 @@ func getStatus(err error) string {
 	}
 
 	return "succeeded"
+}
+
+func getErrorMessage(err error) *string {
+	if err == nil || err == subcommand.ErrBuildFailed {
+		return nil
+	}
+
+	message := err.Error()
+	return &message
 }
