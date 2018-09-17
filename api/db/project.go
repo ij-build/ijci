@@ -89,3 +89,57 @@ func GetOrCreateProject(db sqlx.Queryer, logger nacelle.Logger, repositoryURL st
 
 	return p, nil
 }
+
+func CreateProject(db sqlx.Execer, logger nacelle.Logger, p *Project) error {
+	query := `
+	insert into projects (
+		project_id,
+		name,
+		repository_url
+	) values ($1, $2, $3)
+	`
+
+	_, err := db.Exec(
+		query,
+		p.ProjectID,
+		p.Name,
+		p.RepositoryURL,
+	)
+
+	if err != nil {
+		return handlePostgresError(err, "insert error")
+	}
+
+	logger.InfoWithFields(nacelle.LogFields{
+		"project_id": p.ProjectID,
+	}, "Project created")
+
+	return nil
+}
+
+func UpdateProject(db sqlx.Execer, logger nacelle.Logger, p *Project) error {
+	query := `
+	update projects
+	set
+		name = $1,
+		repository_url = $2
+	where project_id = $3
+	`
+
+	_, err := db.Exec(
+		query,
+		p.Name,
+		p.RepositoryURL,
+		p.ProjectID,
+	)
+
+	if err != nil {
+		return handlePostgresError(err, "update error")
+	}
+
+	logger.InfoWithFields(nacelle.LogFields{
+		"project_id": p.ProjectID,
+	}, "Project updated")
+
+	return nil
+}

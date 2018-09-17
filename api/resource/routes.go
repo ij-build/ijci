@@ -19,11 +19,19 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.MustRegister(
 		"/projects",
 		&ProjectsResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/project-post.yaml"),
+			chevron.MethodPost,
+		),
 	)
 
 	router.MustRegister(
 		fmt.Sprintf("/projects/{project_id:%s}", consts.PatternUUID),
 		&ProjectResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/project-patch.yaml"),
+			chevron.MethodPatch,
+		),
 	)
 
 	router.MustRegister(

@@ -1,0 +1,12 @@
+type: object
+properties:
+  name:
+    type: string
+    minLength: 1
+  repository_url:
+    type: string
+    minLength: 1
+additionalProperties: false
+required:
+  - name
+  - repository_url
