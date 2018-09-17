@@ -27,6 +27,7 @@ create table builds (
     commit_committer_name text,
     commit_committer_email text,
     commit_committed_at timestamp with time zone,
+    error_message text,
     created_at timestamp with time zone not null,
     started_at timestamp with time zone,
     completed_at timestamp with time zone
