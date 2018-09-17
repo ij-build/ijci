@@ -10,18 +10,22 @@ import (
 
 type (
 	Build struct {
-		BuildID           uuid.UUID  `db:"build_id" json:"build_id"`
-		ProjectID         uuid.UUID  `db:"project_id" json:"project_id"`
-		BuildStatus       string     `db:"build_status" json:"build_status"`
-		AgentAddr         *string    `db:"agent_addr" json:"agent_addr"`
-		CommitAuthorName  *string    `db:"commit_author_name" json:"commit_author_name"`
-		CommitAuthorEmail *string    `db:"commit_author_email" json:"commit_author_email"`
-		CommittedAt       *time.Time `db:"committed_at" json:"committed_at"`
-		CommitHash        *string    `db:"commit_hash" json:"commit_hash"`
-		CommitMessage     *string    `db:"commit_message" json:"commit_message"`
-		CreatedAt         time.Time  `db:"created_at" json:"created_at"`
-		StartedAt         *time.Time `db:"started_at" json:"started_at"`
-		CompletedAt       *time.Time `db:"completed_at" json:"completed_at"`
+		BuildID              uuid.UUID  `db:"build_id" json:"build_id"`
+		ProjectID            uuid.UUID  `db:"project_id" json:"project_id"`
+		BuildStatus          string     `db:"build_status" json:"build_status"`
+		AgentAddr            *string    `db:"agent_addr" json:"agent_addr"`
+		CommitBranch         *string    `db:"commit_branch" json:"commit_branch"`
+		CommitHash           *string    `db:"commit_hash" json:"commit_hash"`
+		CommitMessage        *string    `db:"commit_message" json:"commit_message"`
+		CommitAuthorName     *string    `db:"commit_author_name" json:"commit_author_name"`
+		CommitAuthorEmail    *string    `db:"commit_author_email" json:"commit_author_email"`
+		CommitAuthoredAt     *time.Time `db:"commit_authored_at" json:"commit_authored_at"`
+		CommitCommitterName  *string    `db:"commit_committer_name" json:"commit_committer_name"`
+		CommitCommitterEmail *string    `db:"commit_committer_email" json:"commit_committer_email"`
+		CommitCommittedAt    *time.Time `db:"commit_committed_at" json:"commit_committed_at"`
+		CreatedAt            time.Time  `db:"created_at" json:"created_at"`
+		StartedAt            *time.Time `db:"started_at" json:"started_at"`
+		CompletedAt          *time.Time `db:"completed_at" json:"completed_at"`
 	}
 
 	BuildWithProject struct {
@@ -127,13 +131,17 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 	set
 		build_status = $1,
 		agent_addr = $2,
-		commit_author_name = $3,
-		commit_author_email = $4,
-		committed_at = $5,
-		commit_hash = $6,
-		commit_message = $7,
-		started_at = $8,
-		completed_at = $9
+		commit_branch = $3,
+		commit_hash = $4,
+		commit_message = $5,
+		commit_author_name = $6,
+		commit_author_email = $7,
+		commit_authored_at = $8,
+		commit_committer_name = $9,
+		commit_committer_email = $10,
+		commit_committed_at = $11,
+		started_at = $13,
+		completed_at = $14
 	where
 		build_id = $10
 	`
@@ -151,11 +159,16 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 		buildsQuery,
 		b.BuildStatus,
 		b.AgentAddr,
-		b.CommitAuthorName,
-		b.CommitAuthorEmail,
-		b.CommittedAt,
+		b.CommitBranch,
 		b.CommitHash,
 		b.CommitMessage,
+		b.CommitAuthorName,
+		b.CommitAuthorEmail,
+		b.CommitAuthoredAt,
+		b.CommitCommitterName,
+		b.CommitCommitterEmail,
+		b.CommitCommittedAt,
+		b.ErrorMessage,
 		b.StartedAt,
 		b.CompletedAt,
 		b.BuildID,

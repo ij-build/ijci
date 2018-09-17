@@ -20,13 +20,17 @@ type (
 	}
 
 	BuildPayload struct {
-		BuildStatus       *string    `json:"build_status,omitempty"`
-		AgentAddr         *string    `json:"agent_addr,omitempty"`
-		CommitAuthorName  *string    `json:"commit_author_name,omitempty"`
-		CommitAuthorEmail *string    `json:"commit_author_email,omitempty"`
-		CommitedAt        *time.Time `json:"committed_at,omitempty"`
-		CommitHash        *string    `json:"commit_hash,omitempty"`
-		CommitMessage     *string    `json:"commit_message,omitempty"`
+		BuildStatus          *string    `json:"build_status,omitempty"`
+		AgentAddr            *string    `json:"agent_addr,omitempty"`
+		CommitBranch         *string    `json:"commit_branch,omitempty"`
+		CommitHash           *string    `json:"commit_hash,omitempty"`
+		CommitMessage        *string    `json:"commit_message,omitempty"`
+		CommitAuthorName     *string    `json:"commit_author_name,omitempty"`
+		CommitAuthorEmail    *string    `json:"commit_author_email,omitempty"`
+		CommitAuthoredAt     *time.Time `json:"commit_authored_at,omitempty"`
+		CommitCommitterName  *string    `json:"commit_committer_name,omitempty"`
+		CommitCommitterEmail *string    `json:"commit_committer_email,omitempty"`
+		CommitCommitedAt     *time.Time `json:"commit_committed_at,omitempty"`
 	}
 
 	client struct {

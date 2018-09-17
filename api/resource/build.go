@@ -23,13 +23,17 @@ type (
 	}
 
 	jsonBuildPatchPayload struct {
-		BuildStatus       *string    `json:"build_status"`
-		AgentAddr         *string    `json:"agent_addr"`
-		CommitAuthorName  *string    `json:"commit_author_name"`
-		CommitAuthorEmail *string    `json:"commit_author_email"`
-		CommittedAt       *time.Time `json:"committed_at"`
-		CommitHash        *string    `json:"commit_hash"`
-		CommitMessage     *string    `json:"commit_message"`
+		BuildStatus          *string    `json:"build_status"`
+		AgentAddr            *string    `json:"agent_addr"`
+		CommitBranch         *string    `json:"commit_branch"`
+		CommitHash           *string    `json:"commit_hash"`
+		CommitMessage        *string    `json:"commit_message"`
+		CommitAuthorName     *string    `json:"commit_author_name"`
+		CommitAuthorEmail    *string    `json:"commit_author_email"`
+		CommitAuthoredAt     *time.Time `json:"commit_authored_at"`
+		CommitCommitterName  *string    `json:"commit_committer_name"`
+		CommitCommitterEmail *string    `json:"commit_committer_email"`
+		CommitCommittedAt    *time.Time `json:"commit_committed_at"`
 	}
 )
 
@@ -80,12 +84,16 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 		build.BuildStatus = *payload.BuildStatus
 	}
 
-	build.AgentAddr = orString(payload.AgentAddr, build.AgentAddr)
-	build.CommitAuthorName = orString(payload.CommitAuthorName, build.CommitAuthorName)
-	build.CommitAuthorEmail = orString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
-	build.CommittedAt = orTime(payload.CommittedAt, build.CommittedAt)
-	build.CommitHash = orString(payload.CommitHash, build.CommitHash)
-	build.CommitMessage = orString(payload.CommitMessage, build.CommitMessage)
+	build.AgentAddr = orOptionalString(payload.AgentAddr, build.AgentAddr)
+	build.CommitBranch = orOptionalString(payload.CommitBranch, build.CommitBranch)
+	build.CommitHash = orOptionalString(payload.CommitHash, build.CommitHash)
+	build.CommitMessage = orOptionalString(payload.CommitMessage, build.CommitMessage)
+	build.CommitAuthorName = orOptionalString(payload.CommitAuthorName, build.CommitAuthorName)
+	build.CommitAuthorEmail = orOptionalString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
+	build.CommitAuthoredAt = orOptionalTime(payload.CommitAuthoredAt, build.CommitAuthoredAt)
+	build.CommitCommitterName = orOptionalString(payload.CommitCommitterName, build.CommitCommitterName)
+	build.CommitCommitterEmail = orOptionalString(payload.CommitCommitterEmail, build.CommitCommitterEmail)
+	build.CommitCommittedAt = orOptionalTime(payload.CommitCommittedAt, build.CommitCommittedAt)
 
 	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(
@@ -112,20 +120,4 @@ func justCompleted(oldStatus, newStatus string) bool {
 
 func isTerminal(buildStatus string) bool {
 	return buildStatus != "queued" && buildStatus != "in-progress"
-}
-
-func orString(newVal, oldVal *string) *string {
-	if newVal != nil {
-		return newVal
-	}
-
-	return oldVal
-}
-
-func orTime(newVal, oldVal *time.Time) *time.Time {
-	if newVal != nil {
-		return newVal
-	}
-
-	return oldVal
 }

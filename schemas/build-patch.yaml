@@ -9,14 +9,32 @@ properties:
       - succeeded
   agent_addr:
     type: string
-  commit_author_name:
+    minLength: 1
+  commit_branch:
     type: string
-  commit_author_email:
-    type: string
-  committed_at:
-    type: string
+    minLength: 1
   commit_hash:
     type: string
+    minLength: 1
   commit_message:
     type: string
+    minLength: 1
+  commit_author_name:
+    type: string
+    minLength: 1
+  commit_author_email:
+    type: string
+    minLength: 1
+  commit_authored_at:
+    type: string
+    minLength: 1
+  commit_committer_name:
+    type: string
+    minLength: 1
+  commit_committer_email:
+    type: string
+    minLength: 1
+  commit_committed_at:
+    type: string
+    minLength: 1
 additionalProperties: false

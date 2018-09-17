@@ -18,11 +18,15 @@ create table builds (
     project_id uuid not null references projects on delete cascade,
     build_status build_status not null,
     agent_addr text,
-    commit_author_name text,
-    commit_author_email text,
-    committed_at timestamp with time zone,
+    commit_branch text,
     commit_hash text,
     commit_message text,
+    commit_author_name text,
+    commit_author_email text,
+    commit_authored_at timestamp with time zone,
+    commit_committer_name text,
+    commit_committer_email text,
+    commit_committed_at timestamp with time zone,
     created_at timestamp with time zone not null,
     started_at timestamp with time zone,
     completed_at timestamp with time zone
@@ -45,5 +49,4 @@ create table build_logs (
 drop table build_logs;
 drop table builds;
 drop table projects;
-
 drop type build_status;

@@ -63,11 +63,15 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	)
 
 	if err := h.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
-		CommitAuthorName:  &commit.Author.Name,
-		CommitAuthorEmail: &commit.Author.Email,
-		CommitedAt:        &commit.Author.When,
-		CommitHash:        &commitHash,
-		CommitMessage:     &commit.Message,
+		CommitBranch:         &message.CommitBranch,
+		CommitHash:           &commitHash,
+		CommitMessage:        &commit.Message,
+		CommitAuthorName:     &commit.Author.Name,
+		CommitAuthorEmail:    &commit.Author.Email,
+		CommitAuthoredAt:     &commit.Author.When,
+		CommitCommitterName:  &commit.Committer.Name,
+		CommitCommitterEmail: &commit.Committer.Email,
+		CommitCommitedAt:     &commit.Committer.When,
 	}); err != nil {
 		return err
 	}

@@ -19,7 +19,8 @@ type (
 		mutex      sync.Mutex
 	}
 
-	Marshaler interface {
+	Messager interface {
+		Normalize() error
 		Marshal() ([]byte, error)
 	}
 )
@@ -50,7 +51,11 @@ func (p *Producer) Shutdown() error {
 	return nil
 }
 
-func (p *Producer) Publish(message Marshaler) error {
+func (p *Producer) Publish(message Messager) error {
+	if err := message.Normalize(); err != nil {
+		return err
+	}
+
 	body, err := message.Marshal()
 	if err != nil {
 		return fmt.Errorf("failed to marshal message (%s)", err.Error())
