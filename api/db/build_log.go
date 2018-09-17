@@ -18,7 +18,7 @@ type BuildLog struct {
 	UploadedAt *time.Time `db:"uploaded_at" json:"uploaded_at"`
 }
 
-func GetBuildLogs(db sqlx.Queryer, buildID uuid.UUID) ([]*BuildLog, error) {
+func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 	query := `select * from build_logs where build_id = $1 order by created_at`
 
 	buildLogs := []*BuildLog{}
@@ -29,7 +29,7 @@ func GetBuildLogs(db sqlx.Queryer, buildID uuid.UUID) ([]*BuildLog, error) {
 	return buildLogs, nil
 }
 
-func GetBuildLog(db sqlx.Queryer, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
+func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
 	query := `select * from build_logs where build_id = $1 AND build_log_id = $2`
 
 	buildLog := &BuildLog{}
@@ -40,7 +40,7 @@ func GetBuildLog(db sqlx.Queryer, buildID, buildLogID uuid.UUID) (*BuildLog, err
 	return buildLog, nil
 }
 
-func CreateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
+func CreateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	query := `
 	insert into build_logs (
 		build_log_id,
@@ -70,7 +70,7 @@ func CreateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
 	return nil
 }
 
-func UpdateBuildLog(db sqlx.Execer, logger nacelle.Logger, l *BuildLog) error {
+func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	query := `
 	update build_logs
 	set

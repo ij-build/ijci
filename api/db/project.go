@@ -24,7 +24,7 @@ type (
 	}
 )
 
-func GetProjects(db sqlx.Queryer) ([]*Project, error) {
+func GetProjects(db *LoggingDB) ([]*Project, error) {
 	query := `select * from projects order by last_build_completed_at desc, project_id`
 
 	projects := []*Project{}
@@ -35,7 +35,7 @@ func GetProjects(db sqlx.Queryer) ([]*Project, error) {
 	return projects, nil
 }
 
-func GetProject(db sqlx.Queryer, projectID uuid.UUID) (*ProjectWithBuilds, error) {
+func GetProject(db *LoggingDB, projectID uuid.UUID) (*ProjectWithBuilds, error) {
 	query := `select * from projects where project_id = $1`
 
 	p := &Project{}
@@ -51,7 +51,7 @@ func GetProject(db sqlx.Queryer, projectID uuid.UUID) (*ProjectWithBuilds, error
 	return &ProjectWithBuilds{Project: p, Builds: builds}, nil
 }
 
-func GetOrCreateProject(db sqlx.Queryer, logger nacelle.Logger, repositoryURL string) (*Project, error) {
+func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL string) (*Project, error) {
 	query := `
 	insert into projects (
 		project_id,
@@ -90,7 +90,7 @@ func GetOrCreateProject(db sqlx.Queryer, logger nacelle.Logger, repositoryURL st
 	return p, nil
 }
 
-func CreateProject(db sqlx.Execer, logger nacelle.Logger, p *Project) error {
+func CreateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	query := `
 	insert into projects (
 		project_id,
@@ -117,7 +117,7 @@ func CreateProject(db sqlx.Execer, logger nacelle.Logger, p *Project) error {
 	return nil
 }
 
-func UpdateProject(db sqlx.Execer, logger nacelle.Logger, p *Project) error {
+func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	query := `
 	update projects
 	set

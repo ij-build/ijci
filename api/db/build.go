@@ -40,7 +40,7 @@ type (
 	}
 )
 
-func GetBuilds(db sqlx.Queryer) ([]*BuildWithProject, error) {
+func GetBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
 	query := `
 	select
 		builds.*,
@@ -63,7 +63,7 @@ func GetBuilds(db sqlx.Queryer) ([]*BuildWithProject, error) {
 	return builds, nil
 }
 
-func GetBuildsForProject(db sqlx.Queryer, projectID uuid.UUID) ([]*Build, error) {
+func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID) ([]*Build, error) {
 	query := `select * from builds where project_id = $1 order by created_at desc`
 
 	builds := []*Build{}
@@ -74,7 +74,7 @@ func GetBuildsForProject(db sqlx.Queryer, projectID uuid.UUID) ([]*Build, error)
 	return builds, nil
 }
 
-func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*BuildWithProject, error) {
+func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
 	query := `
 	select
 		builds.*,
@@ -97,7 +97,7 @@ func GetBuild(db sqlx.Queryer, buildID uuid.UUID) (*BuildWithProject, error) {
 	return b, nil
 }
 
-func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *BuildWithProject) error {
+func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) error {
 	query := `
 	insert into builds (
 		build_id,
@@ -126,7 +126,12 @@ func CreateBuild(db sqlx.Execer, logger nacelle.Logger, b *BuildWithProject) err
 	return nil
 }
 
-func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
+func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
 	buildsQuery := `
 	update builds
 	set
@@ -148,16 +153,7 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 		build_id = $15
 	`
 
-	projectsQuery := `
-	update projects
-	set
-		last_build_id = $1,
-		last_build_status = $2,
-		last_build_completed_at = $3
-	where project_id = $4
-	`
-
-	_, err := db.Exec(
+	if _, err := tx.Exec(
 		buildsQuery,
 		b.BuildStatus,
 		b.AgentAddr,
@@ -174,23 +170,30 @@ func UpdateBuild(db sqlx.Execer, logger nacelle.Logger, b *Build) error {
 		b.StartedAt,
 		b.CompletedAt,
 		b.BuildID,
-	)
-
-	if err != nil {
+	); err != nil {
 		return handlePostgresError(err, "update error")
 	}
 
-	// TODO - do in a transaction
+	projectsQuery := `
+	update projects
+	set
+		last_build_id = $1,
+		last_build_status = $2,
+		last_build_completed_at = $3
+	where project_id = $4
+	`
 
-	_, err = db.Exec(
+	if _, err := tx.Exec(
 		projectsQuery,
 		b.BuildID,
 		b.BuildStatus,
 		b.CompletedAt,
 		b.ProjectID,
-	)
+	); err != nil {
+		return handlePostgresError(err, "update error")
+	}
 
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return handlePostgresError(err, "update error")
 	}
 
