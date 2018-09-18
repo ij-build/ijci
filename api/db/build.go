@@ -127,7 +127,7 @@ func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) erro
 }
 
 func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
-	tx, err := db.Begin()
+	tx, err := db.Beginx()
 	if err != nil {
 		return err
 	}
