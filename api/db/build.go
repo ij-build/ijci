@@ -63,6 +63,30 @@ func GetBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
 	return builds, nil
 }
 
+func GetBuildQueue(db *LoggingDB) ([]*BuildWithProject, error) {
+	query := `
+	select
+		builds.*,
+		projects.project_id "project.project_id",
+		projects.name "project.name",
+		projects.repository_url "project.repository_url",
+		projects.last_build_id "project.last_build_id",
+		projects.last_build_status "project.last_build_status",
+		projects.last_build_completed_at "project.last_build_completed_at"
+	from builds
+	join projects on builds.project_id = projects.project_id
+	where build_status = 'queued'
+	order by created_at desc
+	`
+
+	builds := []*BuildWithProject{}
+	if err := sqlx.Select(db, &builds, query); err != nil {
+		return nil, handlePostgresError(err, "select error")
+	}
+
+	return builds, nil
+}
+
 func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID) ([]*Build, error) {
 	query := `select * from builds where project_id = $1 order by created_at desc`
 

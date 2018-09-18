@@ -44,6 +44,15 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	)
 
 	router.MustRegister(
+		"/queue",
+		&BuildQueueResource{},
+		chevron.WithMiddlewareFor(
+			middleware.NewSchemaMiddleware("/schemas/build-post.yaml"),
+			chevron.MethodPost,
+		),
+	)
+
+	router.MustRegister(
 		fmt.Sprintf("/builds/{build_id:%s}", consts.PatternUUID),
 		&BuildResource{},
 		chevron.WithMiddlewareFor(
