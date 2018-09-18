@@ -132,11 +132,13 @@ func (h *handler) clone(url, branch, hash, directory string, logger nacelle.Logg
 			return nil, err
 		}
 
-		checkoutOptions := &git.CheckoutOptions{
-			Hash: plumbing.NewHash(hash),
+		hash := plumbing.NewHash(hash)
+
+		if hash.IsZero() {
+			return nil, fmt.Errorf("illegal commit hash")
 		}
 
-		if err := worktree.Checkout(checkoutOptions); err != nil {
+		if err := worktree.Checkout(&git.CheckoutOptions{Hash: hash}); err != nil {
 			return nil, err
 		}
 	}
