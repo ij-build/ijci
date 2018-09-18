@@ -3,7 +3,6 @@ package db
 import (
 	"time"
 
-	"github.com/efritz/ijci/util"
 	"github.com/efritz/nacelle"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -133,7 +132,7 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		return err
 	}
 
-	buildsQuery := `
+	query := `
 	update builds
 	set
 		build_status = $1,
@@ -155,7 +154,7 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 	`
 
 	if _, err := tx.Exec(
-		buildsQuery,
+		query,
 		b.BuildStatus,
 		b.AgentAddr,
 		b.CommitBranch,
@@ -175,25 +174,11 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		return handlePostgresError(err, "update error")
 	}
 
-	if util.IsTerminal(b.BuildStatus) {
-		projectsQuery := `
-		update projects
-		set
-			last_build_id = $1,
-			last_build_status = $2,
-			last_build_completed_at = $3
-		where project_id = $4
-		`
-
-		if _, err := tx.Exec(
-			projectsQuery,
-			b.BuildID,
-			b.BuildStatus,
-			b.CompletedAt,
-			b.ProjectID,
-		); err != nil {
-			return handlePostgresError(err, "update error")
-		}
+	if _, err := tx.Exec(
+		`select update_last_build($1, null)`,
+		b.ProjectID,
+	); err != nil {
+		return handlePostgresError(err, "update error")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -213,40 +198,19 @@ func DeleteBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		return err
 	}
 
-	query := `
-	update projects p
-	set
-		last_build_id = b.build_id,
-		last_build_status = b.build_status,
-		last_build_completed_at = b.completed_at
-	from (
-		select * from (
-			select
-				build_id,
-				build_status,
-				completed_at
-			from builds
-			where project_id = $1 and build_id <> $2 and completed_at is not null
-			order by completed_at desc
-		) t union select
-			null,
-			null,
-			null
-		limit 1
-	) b
-	where p.project_id = $1 and p.last_build_id = $2
-	`
-
 	if _, err := tx.Exec(
-		query,
+		`select update_last_build($1, $2)`,
 		b.ProjectID,
 		b.BuildID,
 	); err != nil {
-		return handlePostgresError(err, "update error")
+		return handlePostgresError(err, "delete error")
 	}
 
-	if _, err := tx.Exec(`delete from builds where build_id = $1`, b.BuildID); err != nil {
-		return handlePostgresError(err, "update error")
+	if _, err := tx.Exec(
+		`delete from builds where build_id = $1`,
+		b.BuildID,
+	); err != nil {
+		return handlePostgresError(err, "delete error")
 	}
 
 	if err := tx.Commit(); err != nil {

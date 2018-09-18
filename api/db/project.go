@@ -25,7 +25,11 @@ type (
 )
 
 func GetProjects(db *LoggingDB) ([]*Project, error) {
-	query := `select * from projects order by last_build_completed_at desc, project_id`
+	query := `
+	select *
+	from projects
+	order by last_build_completed_at desc, project_id
+	`
 
 	projects := []*Project{}
 	if err := sqlx.Select(db, &projects, query); err != nil {
@@ -36,7 +40,11 @@ func GetProjects(db *LoggingDB) ([]*Project, error) {
 }
 
 func GetProject(db *LoggingDB, projectID uuid.UUID) (*ProjectWithBuilds, error) {
-	query := `select * from projects where project_id = $1`
+	query := `
+	select *
+	from projects
+	where project_id = $1
+	`
 
 	p := &Project{}
 	if err := sqlx.Get(db, p, query, projectID); err != nil {
@@ -58,8 +66,9 @@ func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL stri
 		name,
 		repository_url
 	) values ($1, $2, $3)
-	on conflict ("repository_url") do update
-		set project_id = projects.project_id
+	on conflict ("repository_url") do
+		update set
+			project_id = projects.project_id
 		returning projects.project_id
 	`
 
@@ -145,7 +154,10 @@ func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 }
 
 func DeleteProject(db *LoggingDB, logger nacelle.Logger, projectID uuid.UUID) error {
-	if _, err := db.Exec(`delete from projects where project_id = $1`, projectID); err != nil {
+	if _, err := db.Exec(
+		`delete from projects where project_id = $1`,
+		projectID,
+	); err != nil {
 		return handlePostgresError(err, "delete error")
 	}
 

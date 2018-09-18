@@ -18,7 +18,12 @@ type BuildLog struct {
 }
 
 func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
-	query := `select * from build_logs where build_id = $1 order by created_at`
+	query := `
+	select *
+	from build_logs
+	where build_id = $1
+	order by created_at
+	`
 
 	buildLogs := []*BuildLog{}
 	if err := sqlx.Select(db, &buildLogs, query, buildID); err != nil {
@@ -45,7 +50,11 @@ func GetBuildLogsForProject(db *LoggingDB, projectID uuid.UUID) ([]*BuildLog, er
 }
 
 func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
-	query := `select * from build_logs where build_id = $1 AND build_log_id = $2`
+	query := `
+	select *
+	from build_logs
+	where build_id = $1 and build_log_id = $2
+	`
 
 	buildLog := &BuildLog{}
 	if err := sqlx.Get(db, buildLog, query, buildID, buildLogID); err != nil {
