@@ -53,6 +53,11 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	)
 
 	router.MustRegister(
+		fmt.Sprintf("/builds/{build_id:%s}/requeue", consts.PatternUUID),
+		&BuildRequeueResource{},
+	)
+
+	router.MustRegister(
 		fmt.Sprintf("/builds/{build_id:%s}/logs", consts.PatternUUID),
 		&BuildLogsResource{},
 		chevron.WithMiddlewareFor(

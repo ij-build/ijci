@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/amqp/client"
-	"github.com/efritz/ijci/amqp/message"
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/util"
 )
@@ -83,7 +82,7 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	if err := r.queueBuild(build); err != nil {
+	if err := queueBuild(r.Producer, build); err != nil {
 		return util.InternalError(
 			logger,
 			err,
@@ -110,19 +109,4 @@ func (r *BuildsResource) getProject(projectID, repositoryURL *string, logger nac
 	}
 
 	return db.GetOrCreateProject(r.DB, logger, *repositoryURL)
-}
-
-func (r *BuildsResource) queueBuild(build *db.BuildWithProject) error {
-	message := &message.BuildMessage{
-		BuildID:       build.BuildID,
-		RepositoryURL: build.Project.RepositoryURL,
-		CommitBranch:  orString(build.CommitBranch, ""),
-		CommitHash:    orString(build.CommitHash, ""),
-	}
-
-	if err := r.Producer.Publish(message); err != nil {
-		return fmt.Errorf("failed to publish message (%s)", err.Error())
-	}
-
-	return nil
 }
