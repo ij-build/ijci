@@ -28,6 +28,22 @@ func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 	return buildLogs, nil
 }
 
+func GetBuildLogsForProject(db *LoggingDB, projectID uuid.UUID) ([]*BuildLog, error) {
+	query := `
+	select l.*
+	from build_logs l
+	join builds b on l.build_id = b.build_id
+	where project_id = $1
+	`
+
+	buildLogs := []*BuildLog{}
+	if err := sqlx.Select(db, &buildLogs, query, projectID); err != nil {
+		return nil, handlePostgresError(err, "select error")
+	}
+
+	return buildLogs, nil
+}
+
 func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
 	query := `select * from build_logs where build_id = $1 AND build_log_id = $2`
 

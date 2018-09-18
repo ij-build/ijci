@@ -3,6 +3,7 @@ package s3
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -14,10 +15,12 @@ type (
 	Client interface {
 		Upload(ctx context.Context, key, content string) error
 		Download(ctx context.Context, key string) (string, error)
+		Delete(ctx context.Context, keys []string) error
 	}
 
 	client struct {
 		bucketName string
+		api        s3iface.S3API
 		uploader   *s3manager.Uploader
 		downloader *s3manager.Downloader
 	}
@@ -26,6 +29,7 @@ type (
 func NewClient(bucketName string, api s3iface.S3API) *client {
 	return &client{
 		bucketName: bucketName,
+		api:        api,
 		uploader:   s3manager.NewUploaderWithClient(api),
 		downloader: s3manager.NewDownloaderWithClient(api),
 	}
@@ -54,4 +58,26 @@ func (c *client) Download(ctx context.Context, key string) (string, error) {
 	}
 
 	return string(buffer.Bytes()), nil
+}
+
+func (c *client) Delete(ctx context.Context, keys []string) error {
+	// TODO - break into batches of 1000
+	objects := []*s3.ObjectIdentifier{}
+	for _, key := range keys {
+		objects = append(objects, &s3.ObjectIdentifier{Key: aws.String(key)})
+	}
+
+	resp, err := c.api.DeleteObjectsWithContext(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(c.bucketName),
+		Delete: &s3.Delete{
+			Objects: objects,
+			Quiet:   aws.Bool(true),
+		},
+	})
+
+	if err != nil || len(resp.Errors) == 0 {
+		return err
+	}
+
+	return fmt.Errorf("failed to delete build logs (%s)", resp.Errors[0])
 }

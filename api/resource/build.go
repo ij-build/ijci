@@ -13,6 +13,7 @@ import (
 	"github.com/efritz/response"
 
 	"github.com/efritz/ijci/api/db"
+	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/util"
 )
 
@@ -20,6 +21,7 @@ type (
 	BuildResource struct {
 		*chevron.EmptySpec
 		DB *db.LoggingDB `service:"db"`
+		S3 s3.Client     `service:"s3"`
 	}
 
 	jsonBuildPatchPayload struct {
@@ -113,6 +115,28 @@ func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger na
 	build, resp := getBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
+	}
+
+	buildLogs, err := db.GetBuildLogs(r.DB, build.BuildID)
+	if err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to fetch build log records (%s)", err.Error()),
+		)
+	}
+
+	keys := []string{}
+	for _, buildLog := range buildLogs {
+		if buildLog.Key != nil {
+			keys = append(keys, *buildLog.Key)
+		}
+	}
+
+	if err := r.S3.Delete(ctx, keys); err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to delete build (%s)", err.Error()),
+		)
 	}
 
 	if err := db.DeleteBuild(r.DB, logger, build.Build); err != nil {
