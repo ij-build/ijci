@@ -69,3 +69,18 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 		"project": project,
 	})
 }
+
+func (r *ProjectResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+	if err := db.DeleteProject(r.DB, logger, util.GetProjectID(req)); err != nil {
+		if err == db.ErrDoesNotExist {
+			return response.Empty(http.StatusNotFound)
+		}
+
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to delete project (%s)", err.Error()),
+		)
+	}
+
+	return response.Empty(http.StatusNoContent)
+}

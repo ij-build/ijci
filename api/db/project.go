@@ -143,3 +143,15 @@ func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 
 	return nil
 }
+
+func DeleteProject(db *LoggingDB, logger nacelle.Logger, projectID uuid.UUID) error {
+	if _, err := db.Exec(`delete from projects where project_id = $1`, projectID); err != nil {
+		return handlePostgresError(err, "delete error")
+	}
+
+	logger.InfoWithFields(nacelle.LogFields{
+		"project_id": projectID,
+	}, "Project deleted")
+
+	return nil
+}

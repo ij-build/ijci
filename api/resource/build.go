@@ -72,12 +72,12 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 	}
 
 	if payload.BuildStatus != nil {
-		if justStarted(build.BuildStatus, *payload.BuildStatus) {
+		if util.JustStarted(build.BuildStatus, *payload.BuildStatus) {
 			now := time.Now()
 			build.StartedAt = &now
 		}
 
-		if justCompleted(build.BuildStatus, *payload.BuildStatus) {
+		if util.JustCompleted(build.BuildStatus, *payload.BuildStatus) {
 			now := time.Now()
 			build.CompletedAt = &now
 		}
@@ -109,17 +109,22 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 	})
 }
 
-//
-// Helpers
+func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+	build, resp := getBuild(r.DB, logger, req)
+	if resp != nil {
+		return resp
+	}
 
-func justStarted(oldStatus, newStatus string) bool {
-	return newStatus == "in-progress" && oldStatus != "in-progress"
-}
+	if err := db.DeleteBuild(r.DB, logger, build.Build); err != nil {
+		if err == db.ErrDoesNotExist {
+			return response.Empty(http.StatusNotFound)
+		}
 
-func justCompleted(oldStatus, newStatus string) bool {
-	return isTerminal(newStatus) && !isTerminal(oldStatus)
-}
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to delete build (%s)", err.Error()),
+		)
+	}
 
-func isTerminal(buildStatus string) bool {
-	return buildStatus != "queued" && buildStatus != "in-progress"
+	return response.Empty(http.StatusNoContent)
 }

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/efritz/nacelle"
@@ -80,24 +79,13 @@ func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 		build_log_id = $3
 	`
 
-	resp, err := db.Exec(
+	if _, err := db.Exec(
 		query,
 		l.Key,
 		l.UploadedAt,
 		l.BuildLogID,
-	)
-
-	if err != nil {
+	); err != nil {
 		return handlePostgresError(err, "update error")
-	}
-
-	ra, err := resp.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get affected rows (%s)", err.Error())
-	}
-
-	if ra == 0 {
-		return ErrDoesNotExist
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
