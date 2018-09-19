@@ -32,7 +32,7 @@
   revision = "9fa1742697a8bf85e5de5680b861ebfaa5cb4c1f"
 
 [[projects]]
-  digest = "1:8dea400e708afab08d49a4409509f873b568f3a3677f2d59f34db10054090150"
+  digest = "1:2a44ffef2f0fdaa0b04eb7adb4fd5fcb0c2e3c0143ea6397bb797076217843b2"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -70,8 +70,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "71a2a92b0063297b055b6f5a014d441c142da2ce"
-  version = "v1.15.32"
+  revision = "3dd4f56d3cb9d194293525540562216f81bd3f27"
+  version = "v1.15.37"
 
 [[projects]]
   branch = "master"
@@ -145,7 +145,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d9332557af8b7b5dae4f5123203dc33c314b37677631d0839ea01d2b118d562c"
+  digest = "1:eda8c467e3b4648cc293e5e2d8897f1ecf3f8df1561d52fc1c0c1d502752483b"
   name = "github.com/efritz/ij"
   packages = [
     "asset",
@@ -167,7 +167,7 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "658c0615cd22d766cf7cf780639e8819456b8c2a"
+  revision = "53df22aa0f209f3048a7c0e2c09d0606182fe6e5"
 
 [[projects]]
   branch = "master"
@@ -509,18 +509,18 @@
   name = "golang.org/x/net"
   packages = ["context"]
   pruneopts = "UT"
-  revision = "161cd47e91fd58ac17490ef4d742dc98bb4cf60e"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
-  digest = "1:374fc90fcb026e9a367e3fad29e988e5dd944b68ca3f24a184d77abc5307dda4"
+  digest = "1:e10551220bea6da5274318545537df1012268056be6484b83a3338328050cde0"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
 
 [[projects]]
   digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
@@ -649,6 +649,8 @@
     "github.com/rubenv/sql-migrate",
     "github.com/streadway/amqp",
     "gopkg.in/src-d/go-git.v4",
+    "gopkg.in/src-d/go-git.v4/plumbing",
+    "gopkg.in/src-d/go-git.v4/plumbing/object",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
