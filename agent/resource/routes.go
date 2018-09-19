@@ -1,7 +1,7 @@
 package resource
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -16,10 +16,15 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewLogging())
 	router.AddMiddleware(middleware.NewRequestID())
 
-	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}/logs/{build_log_id:%s}", consts.PatternUUID, consts.PatternUUID),
-		&BuildLogResource{},
-	)
+	register := func(template string, resource chevron.ResourceSpec, middleware ...chevron.MiddlewareConfigFunc) {
+		router.MustRegister(expandTemplate(template), resource, middleware...)
+	}
 
+	register("/builds/{build_id:<id>}/stop", &BuildStopResource{})
+	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{})
 	return nil
+}
+
+func expandTemplate(template string) string {
+	return strings.Replace(template, "<id>", consts.PatternUUID, -1)
 }

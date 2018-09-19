@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/chevron/middleware"
@@ -16,73 +17,34 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	router.AddMiddleware(middleware.NewLogging())
 	router.AddMiddleware(middleware.NewRequestID())
 
-	router.MustRegister(
-		"/projects",
-		&ProjectsResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/project-post.yaml"),
-			chevron.MethodPost,
-		),
-	)
+	register := func(template string, resource chevron.ResourceSpec, middleware ...chevron.MiddlewareConfigFunc) {
+		router.MustRegister(expandTemplate(template), resource, middleware...)
+	}
 
-	router.MustRegister(
-		fmt.Sprintf("/projects/{project_id:%s}", consts.PatternUUID),
-		&ProjectResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/project-patch.yaml"),
-			chevron.MethodPatch,
-		),
-	)
-
-	router.MustRegister(
-		"/builds",
-		&BuildsResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/build-post.yaml"),
-			chevron.MethodPost,
-		),
-	)
-
-	router.MustRegister(
-		"/queue",
-		&BuildQueueResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/build-post.yaml"),
-			chevron.MethodPost,
-		),
-	)
-
-	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}", consts.PatternUUID),
-		&BuildResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/build-patch.yaml"),
-			chevron.MethodPatch,
-		),
-	)
-
-	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}/requeue", consts.PatternUUID),
-		&BuildRequeueResource{},
-	)
-
-	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}/logs", consts.PatternUUID),
-		&BuildLogsResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/build-log-post.yaml"),
-			chevron.MethodPost,
-		),
-	)
-
-	router.MustRegister(
-		fmt.Sprintf("/builds/{build_id:%s}/logs/{build_log_id:%s}", consts.PatternUUID, consts.PatternUUID),
-		&BuildLogResource{},
-		chevron.WithMiddlewareFor(
-			middleware.NewSchemaMiddleware("/schemas/build-log-patch.yaml"),
-			chevron.MethodPatch,
-		),
-	)
-
+	register("/projects", &ProjectsResource{}, makePostSchema("project"))
+	register("/projects/{project_id:<id>}", &ProjectResource{}, makePatchSchema("project"))
+	register("/builds", &BuildsResource{}, makePostSchema("build"))
+	register("/builds/{build_id:<id>}", &BuildResource{}, makePatchSchema("build"))
+	register("/builds/{build_id:<id>}/stop", &BuildStopResource{})
+	register("/builds/{build_id:<id>}/requeue", &BuildRequeueResource{})
+	register("/builds/{build_id:<id>}/logs", &BuildLogsResource{}, makePostSchema("build-log"))
+	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{}, makePatchSchema("build-log"))
+	register("/queue", &BuildQueueResource{})
 	return nil
+}
+
+func expandTemplate(template string) string {
+	return strings.Replace(template, "<id>", consts.PatternUUID, -1)
+}
+
+func makePostSchema(name string) chevron.MiddlewareConfigFunc {
+	return chevron.WithMiddlewareFor(makeSchema(name, "post"), chevron.MethodPost)
+}
+
+func makePatchSchema(name string) chevron.MiddlewareConfigFunc {
+	return chevron.WithMiddlewareFor(makeSchema(name, "patch"), chevron.MethodPatch)
+}
+
+func makeSchema(name, suffix string) chevron.Middleware {
+	return middleware.NewSchemaMiddleware(fmt.Sprintf("/schemas/%s-%s.yaml", name, suffix))
 }

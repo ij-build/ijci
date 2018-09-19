@@ -9,13 +9,13 @@ import (
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
 
-	"github.com/efritz/ijci/agent/logs"
+	"github.com/efritz/ijci/agent/log"
 	"github.com/efritz/ijci/util"
 )
 
 type BuildLogResource struct {
 	*chevron.EmptySpec
-	LogProcessor *logs.LogProcessor `service:"log-processor"`
+	LogProcessor *log.LogProcessor `service:"log-processor"`
 }
 
 func (r *BuildLogResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
@@ -30,7 +30,7 @@ func (r *BuildLogResource) Get(ctx context.Context, req *http.Request, logger na
 	if err != nil {
 		cancel()
 
-		if err == logs.ErrUnknownBuildLog {
+		if err == log.ErrUnknownBuildLog {
 			return response.Empty(http.StatusNotFound)
 		}
 

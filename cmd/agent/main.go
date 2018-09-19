@@ -6,9 +6,10 @@ import (
 	basehttp "github.com/efritz/nacelle/base/http"
 
 	"github.com/efritz/ijci/agent/api"
+	"github.com/efritz/ijci/agent/context"
 	"github.com/efritz/ijci/agent/handler"
 	"github.com/efritz/ijci/agent/listener"
-	"github.com/efritz/ijci/agent/logs"
+	"github.com/efritz/ijci/agent/log"
 	"github.com/efritz/ijci/agent/resource"
 	"github.com/efritz/ijci/amqp/client"
 )
@@ -25,8 +26,13 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 	)
 
 	processes.RegisterInitializer(
-		logs.NewInitializer(),
-		nacelle.WithInitializerName("logs"),
+		context.NewInitializer(),
+		nacelle.WithInitializerName("context"),
+	)
+
+	processes.RegisterInitializer(
+		log.NewInitializer(),
+		nacelle.WithInitializerName("log"),
 	)
 
 	processes.RegisterInitializer(

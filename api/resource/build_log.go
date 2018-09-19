@@ -122,13 +122,14 @@ func (r *BuildLogResource) streamFromAgent(
 	buildLogID uuid.UUID,
 	agentAddr string,
 ) response.Response {
-	resp, err := http.DefaultClient.Get(fmt.Sprintf(
+	url := fmt.Sprintf(
 		"%s/builds/%s/logs/%s",
 		agentAddr,
 		buildID,
 		buildLogID,
-	))
+	)
 
+	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return util.InternalError(
 			logger,

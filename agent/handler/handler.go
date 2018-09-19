@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,7 +19,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
 	"github.com/efritz/ijci/agent/api"
-	"github.com/efritz/ijci/agent/logs"
+	agentctx "github.com/efritz/ijci/agent/context"
+	"github.com/efritz/ijci/agent/log"
 	"github.com/efritz/ijci/amqp/message"
 )
 
@@ -28,9 +30,10 @@ type (
 	}
 
 	handler struct {
-		APIClient    apiclient.Client   `service:"api"`
-		LogProcessor *logs.LogProcessor `service:"log-processor"`
-		scratchRoot  string
+		APIClient        apiclient.Client           `service:"api"`
+		LogProcessor     *log.LogProcessor          `service:"log-processor"`
+		ContextProcessor *agentctx.ContextProcessor `service:"context-processor"`
+		scratchRoot      string
 	}
 )
 
@@ -41,6 +44,9 @@ func NewHandler(scratchRoot string) *handler {
 }
 
 func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) error {
+	ctx, cancel := h.ContextProcessor.Create(message.BuildID)
+	defer cancel()
+
 	directory, err := ioutil.TempDir("", "build")
 	if err != nil {
 		return err
@@ -94,6 +100,7 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 	}
 
 	err = h.runDefaultPlan(
+		ctx,
 		config,
 		directory,
 		message.BuildID,
@@ -156,6 +163,7 @@ func (h *handler) loadConfig(directory string) (*config.Config, error) {
 }
 
 func (h *handler) runDefaultPlan(
+	ctx context.Context,
 	config *config.Config,
 	directory string,
 	buildID uuid.UUID,
@@ -196,6 +204,7 @@ func (h *handler) runDefaultPlan(
 		Memory:              "",
 		PlanTimeout:         0,
 		SSHIdentities:       nil,
+		Context:             ctx,
 	}
 
 	return subcommand.NewRunCommand(
