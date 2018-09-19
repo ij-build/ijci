@@ -33,8 +33,14 @@ func (ci *ConsumerInitializer) Init(config nacelle.Config) error {
 		uri         = consumerConfig.URI
 	)
 
-	conn, channel, err := makeChannel(uri, ci.Logger)
+	conn, err := makeConnection(uri, ci.Logger)
 	if err != nil {
+		return err
+	}
+
+	channel, err := makeChannel(conn, ci.Logger)
+	if err != nil {
+		conn.Close()
 		return err
 	}
 

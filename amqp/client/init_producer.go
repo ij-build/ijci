@@ -29,8 +29,14 @@ func (pi *ProducerInitializer) Init(config nacelle.Config) error {
 		uri        = producerConfig.URI
 	)
 
-	conn, channel, err := makeChannel(uri, pi.Logger)
+	conn, err := makeConnection(uri, pi.Logger)
 	if err != nil {
+		return err
+	}
+
+	channel, err := makeChannel(conn, pi.Logger)
+	if err != nil {
+		conn.Close()
 		return err
 	}
 
