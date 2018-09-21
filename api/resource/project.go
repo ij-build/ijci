@@ -44,17 +44,17 @@ func (r *ProjectResource) Get(ctx context.Context, req *http.Request, logger nac
 }
 
 func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	project, resp := getProject(r.DB, logger, req)
-	if resp != nil {
-		return resp
-	}
-
 	payload := &jsonProjectPatchPayload{}
 	if err := json.Unmarshal(middleware.GetJSONData(ctx), payload); err != nil {
 		return util.InternalError(
 			logger,
 			fmt.Errorf("failed to unmarshal request body (%s)", err.Error()),
 		)
+	}
+
+	project, resp := getProject(r.DB, logger, req)
+	if resp != nil {
+		return resp
 	}
 
 	project.Name = orString(payload.Name, project.Name)

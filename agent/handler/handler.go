@@ -77,7 +77,7 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 		commitHash,
 	)
 
-	if err := h.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+	if ok, err := h.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
 		CommitBranch:         &message.CommitBranch,
 		CommitHash:           &commitHash,
 		CommitMessage:        &commit.Message,
@@ -87,8 +87,13 @@ func (h *handler) Handle(message *message.BuildMessage, logger nacelle.Logger) e
 		CommitCommitterName:  &commit.Committer.Name,
 		CommitCommitterEmail: &commit.Committer.Email,
 		CommitCommitedAt:     &commit.Committer.When,
-	}); err != nil {
-		return err
+	}); err != nil || !ok {
+		if err != nil {
+			return err
+		}
+
+		logger.Warning("Build is no longer active in API")
+		return nil
 	}
 
 	config, err := h.loadConfig(directory)

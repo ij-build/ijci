@@ -13,12 +13,13 @@ begin
             select
                 build_id,
                 build_status,
+                created_at,
                 completed_at
             from builds
             where project_id = $1 and completed_at is not null and build_id is distinct from $2
         ) t
-        union select null, null, null
-        order by completed_at desc nulls last
+        union select null, null, null, null
+        order by created_at desc nulls last
         limit 1
     ) b
     where p.project_id = $1;

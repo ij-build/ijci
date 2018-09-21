@@ -67,10 +67,15 @@ func (l *Listener) handle(payload []byte) error {
 
 	initialStatus := "in-progress"
 
-	if err := l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+	if ok, err := l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
 		BuildStatus: &initialStatus,
-	}); err != nil {
-		return err
+	}); err != nil || !ok {
+		if err != nil {
+			return err
+		}
+
+		logger.Warning("Build is no longer active in API")
+		return nil
 	}
 
 	logger.Info("Starting build")
@@ -78,10 +83,19 @@ func (l *Listener) handle(payload []byte) error {
 	status := getStatus(err)
 	logger.Info("Build completed with status %s", status)
 
-	return l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
+	if ok, err := l.APIClient.UpdateBuild(message.BuildID, &apiclient.BuildPayload{
 		BuildStatus:  &status,
 		ErrorMessage: getErrorMessage(err),
-	})
+	}); err != nil || !ok {
+		if err != nil {
+			return err
+		}
+
+		logger.Warning("Build is no longer active in API")
+		return nil
+	}
+
+	return nil
 }
 
 //

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/nacelle"
@@ -31,9 +32,12 @@ func (r *BuildRequeueResource) Post(ctx context.Context, req *http.Request, logg
 		CommitBranch: build.CommitBranch,
 		CommitHash:   build.CommitHash,
 		BuildStatus:  "queued",
-		// TODO - requeued time?
-		// CreatedAt:    time.Now(),
+		StartedAt:    build.StartedAt,
+		QueuedAt:     time.Now(),
 	}
+
+	//
+	// TODO - need to clear old logs
 
 	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(

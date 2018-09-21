@@ -20,7 +20,7 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 		router.MustRegister(expandTemplate(template), resource, middleware...)
 	}
 
-	register("/builds/{build_id:<id>}/stop", &BuildStopResource{})
+	register("/builds/{build_id:<id>}/cancel", &BuildCancelResource{})
 	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{})
 	return nil
 }

@@ -108,6 +108,10 @@ func (r *BuildLogResource) getContentFromAgent(ctx context.Context, req *http.Re
 		return resp
 	}
 
+	if build.AgentAddr == nil {
+		return nil
+	}
+
 	return r.streamFromAgent(
 		logger,
 		util.GetBuildID(req),

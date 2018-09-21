@@ -14,30 +14,40 @@ import (
 	"github.com/efritz/ijci/util"
 )
 
-type BuildStopResource struct {
+type BuildCancelResource struct {
 	*chevron.EmptySpec
 	DB *db.LoggingDB `service:"db"`
 }
 
-func (r *BuildStopResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+func (r *BuildCancelResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
 	build, resp := getBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	//
-	// TODO - how to handle this if still queued?
-
-	if build.BuildStatus != "in-progress" {
+	if build.Canceled || util.IsTerminal(build.BuildStatus) {
 		return response.Empty(http.StatusConflict)
+	}
+
+	build.Canceled = true
+
+	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to update build (%s)", err.Error()),
+		)
+	}
+
+	if build.AgentAddr == nil {
+		return response.Empty(http.StatusOK)
 	}
 
 	return r.cancelOnAgent(*build.AgentAddr, build.BuildID, logger)
 }
 
-func (r *BuildStopResource) cancelOnAgent(agentAddr string, buildID uuid.UUID, logger nacelle.Logger) response.Response {
+func (r *BuildCancelResource) cancelOnAgent(agentAddr string, buildID uuid.UUID, logger nacelle.Logger) response.Response {
 	url := fmt.Sprintf(
-		"%s/builds/%s/stop",
+		"%s/builds/%s/cancel",
 		agentAddr,
 		buildID,
 	)

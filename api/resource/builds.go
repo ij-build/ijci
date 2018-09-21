@@ -64,6 +64,8 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
+	now := time.Now()
+
 	build := &db.BuildWithProject{
 		Project: project,
 		Build: &db.Build{
@@ -71,7 +73,8 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 			CommitBranch: payload.CommitBranch,
 			CommitHash:   payload.CommitHash,
 			BuildStatus:  "queued",
-			CreatedAt:    time.Now(),
+			CreatedAt:    now,
+			QueuedAt:     now,
 		},
 	}
 

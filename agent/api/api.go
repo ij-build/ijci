@@ -14,7 +14,7 @@ import (
 
 type (
 	Client interface {
-		UpdateBuild(buildID uuid.UUID, payload *BuildPayload) error
+		UpdateBuild(buildID uuid.UUID, payload *BuildPayload) (bool, error)
 		OpenBuildLog(buildID uuid.UUID, prefix string) (uuid.UUID, error)
 		UploadBuildLog(buildID, buildLogID uuid.UUID, content string) error
 	}
@@ -57,18 +57,33 @@ func NewClient(apiAddr, publicAddr string) *client {
 	}
 }
 
-func (c *client) UpdateBuild(buildID uuid.UUID, payload *BuildPayload) error {
+func (c *client) UpdateBuild(buildID uuid.UUID, payload *BuildPayload) (bool, error) {
 	logger := c.Logger.WithFields(nacelle.LogFields{
 		"build_id": buildID,
 	})
 
-	// Always update this
+	logger.Info("Updating build")
+
+	url := fmt.Sprintf("/builds/%s", buildID)
 	payload.AgentAddr = &c.publicAddr
 
-	logger.Info("Updating build")
-	_, err := c.do("PATCH", fmt.Sprintf("/builds/%s", buildID), payload)
-	logger.Info("Updated build")
-	return err
+	statusCode, err := c.doForStatusCode("PATCH", url, payload)
+	if err != nil {
+		return false, err
+	}
+
+	switch statusCode {
+	case http.StatusNotFound:
+		logger.Warning("Build was deleted")
+		return false, nil
+
+	case http.StatusConflict:
+		logger.Warning("Build was canceled")
+		return false, nil
+
+	default:
+		return true, nil
+	}
 }
 
 func (c *client) OpenBuildLog(buildID uuid.UUID, prefix string) (uuid.UUID, error) {
@@ -78,28 +93,30 @@ func (c *client) OpenBuildLog(buildID uuid.UUID, prefix string) (uuid.UUID, erro
 
 	logger.Info("Opening build log %s", prefix)
 
-	resp, err := c.do("POST", fmt.Sprintf("/builds/%s/logs", buildID), map[string]interface{}{
+	url := fmt.Sprintf("/builds/%s/logs", buildID)
+	payload := map[string]interface{}{
 		"name": prefix,
-	})
+	}
 
+	body, err := c.doForContent("POST", url, payload)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	payload := &jsonBuildLog{}
-	if err := json.Unmarshal(resp, &jsonBuildLogEnvelope{payload}); err != nil {
+	buildLog := &jsonBuildLog{}
+	if err := json.Unmarshal(body, &jsonBuildLogEnvelope{buildLog}); err != nil {
 		return uuid.Nil, fmt.Errorf("failed to unmarshal response (%s)", err.Error())
 	}
 
 	logger.InfoWithFields(
 		nacelle.LogFields{
-			"build_log_id": payload.BuildLogID,
+			"build_log_id": buildLog.BuildLogID,
 		},
 		"Opened build log %s",
 		prefix,
 	)
 
-	return payload.BuildLogID, nil
+	return buildLog.BuildLogID, nil
 }
 
 func (c *client) UploadBuildLog(buildID, buildLogID uuid.UUID, content string) error {
@@ -110,16 +127,55 @@ func (c *client) UploadBuildLog(buildID, buildLogID uuid.UUID, content string) e
 
 	logger.Info("Uploading build log")
 
-	_, err := c.do("PATCH", fmt.Sprintf("/builds/%s/logs/%s", buildID, buildLogID), map[string]interface{}{
+	url := fmt.Sprintf("/builds/%s/logs/%s", buildID, buildLogID)
+	payload := map[string]interface{}{
 		"content": content,
-	})
+	}
+
+	statusCode, err := c.doForStatusCode("PATCH", url, payload)
+	if err != nil {
+		return err
+	}
+
+	if statusCode < 200 || statusCode >= 300 {
+		return fmt.Errorf("unexpected %d status from API", statusCode)
+	}
 
 	logger.Info("Uploaded build log")
-
-	return err
+	return nil
 }
 
-func (c *client) do(method, uri string, body interface{}) ([]byte, error) {
+func (c *client) doForStatusCode(method, uri string, body interface{}) (int, error) {
+	resp, err := c.do(method, uri, body)
+	if err != nil {
+		return 0, err
+	}
+
+	resp.Body.Close()
+	return resp.StatusCode, nil
+}
+
+func (c *client) doForContent(method, uri string, body interface{}) ([]byte, error) {
+	resp, err := c.do(method, uri, body)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected %d status from API", resp.StatusCode)
+	}
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body (%s)", err.Error())
+	}
+
+	return content, nil
+}
+
+func (c *client) do(method, uri string, body interface{}) (*http.Response, error) {
 	payload, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal payload (%s)", err.Error())
@@ -132,19 +188,8 @@ func (c *client) do(method, uri string, body interface{}) ([]byte, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to patch build (%s)", err.Error())
+		return nil, fmt.Errorf("failed to contact API (%s)", err.Error())
 	}
 
-	defer resp.Body.Close()
-
-	if 200 > resp.StatusCode || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("unexpected %d status from API", resp.StatusCode)
-	}
-
-	content, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body (%s)", err.Error())
-	}
-
-	return content, nil
+	return resp, nil
 }

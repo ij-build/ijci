@@ -29,8 +29,10 @@ create table builds (
     commit_committed_at timestamp with time zone,
     error_message text,
     created_at timestamp with time zone not null,
+    queued_at timestamp with time zone not null,
     started_at timestamp with time zone,
-    completed_at timestamp with time zone
+    completed_at timestamp with time zone,
+    canceled boolean not null default false
 );
 
 alter table projects add column last_build_id uuid references builds;

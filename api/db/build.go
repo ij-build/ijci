@@ -25,8 +25,10 @@ type (
 		CommitCommittedAt    *time.Time `db:"commit_committed_at" json:"commit_committed_at"`
 		ErrorMessage         *string    `db:"error_message" json:"error_message"`
 		CreatedAt            time.Time  `db:"created_at" json:"created_at"`
+		QueuedAt             time.Time  `db:"queued_at" json:"queued_at"`
 		StartedAt            *time.Time `db:"started_at" json:"started_at"`
 		CompletedAt          *time.Time `db:"completed_at" json:"completed_at"`
+		Canceled             bool       `db:"canceled" json:"canceled"`
 	}
 
 	BuildWithProject struct {
@@ -127,8 +129,9 @@ func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) erro
 		build_id,
 		project_id,
 		build_status,
-		created_at
-	) values ($1, $2, $3, $4)
+		created_at,
+		queued_at
+	) values ($1, $2, $3, $4, $5)
 	`
 
 	_, err := db.Exec(
@@ -137,6 +140,7 @@ func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) erro
 		b.Project.ProjectID,
 		b.BuildStatus,
 		b.CreatedAt,
+		b.QueuedAt,
 	)
 
 	if err != nil {
@@ -171,10 +175,12 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		commit_committer_email = $10,
 		commit_committed_at = $11,
 		error_message = $12,
-		started_at = $13,
-		completed_at = $14
+		queued_at = $13,
+		started_at = $14,
+		completed_at = $15,
+		canceled = $16
 	where
-		build_id = $15
+		build_id = $17
 	`
 
 	if _, err := tx.Exec(
@@ -191,8 +197,10 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		b.CommitCommitterEmail,
 		b.CommitCommittedAt,
 		b.ErrorMessage,
+		b.QueuedAt,
 		b.StartedAt,
 		b.CompletedAt,
+		b.Canceled,
 		b.BuildID,
 	); err != nil {
 		return handlePostgresError(err, "update error")

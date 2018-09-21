@@ -25,7 +25,7 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	register("/projects/{project_id:<id>}", &ProjectResource{}, makePatchSchema("project"))
 	register("/builds", &BuildsResource{}, makePostSchema("build"))
 	register("/builds/{build_id:<id>}", &BuildResource{}, makePatchSchema("build"))
-	register("/builds/{build_id:<id>}/stop", &BuildStopResource{})
+	register("/builds/{build_id:<id>}/cancel", &BuildCancelResource{})
 	register("/builds/{build_id:<id>}/requeue", &BuildRequeueResource{})
 	register("/builds/{build_id:<id>}/logs", &BuildLogsResource{}, makePostSchema("build-log"))
 	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{}, makePatchSchema("build-log"))

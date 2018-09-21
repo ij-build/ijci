@@ -60,17 +60,21 @@ func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacel
 }
 
 func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
-	if resp != nil {
-		return resp
-	}
-
 	payload := &jsonBuildPatchPayload{}
 	if err := json.Unmarshal(middleware.GetJSONData(ctx), payload); err != nil {
 		return util.InternalError(
 			logger,
 			fmt.Errorf("failed to unmarshal request body (%s)", err.Error()),
 		)
+	}
+
+	build, resp := getBuild(r.DB, logger, req)
+	if resp != nil {
+		return resp
+	}
+
+	if build.Canceled {
+		return response.Empty(http.StatusConflict)
 	}
 
 	if payload.BuildStatus != nil {
@@ -115,6 +119,10 @@ func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger na
 	build, resp := getBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
+	}
+
+	if !build.Canceled && !util.IsTerminal(build.BuildStatus) {
+		return response.Empty(http.StatusConflict)
 	}
 
 	buildLogs, err := db.GetBuildLogs(r.DB, build.BuildID)
