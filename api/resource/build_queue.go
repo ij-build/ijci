@@ -19,15 +19,24 @@ type BuildQueueResource struct {
 }
 
 func (r *BuildQueueResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	builds, err := db.GetBuildQueue(r.DB)
+	queuedBuilds, err := db.GetQueuedBuilds(r.DB)
 	if err != nil {
 		return util.InternalError(
 			logger,
-			fmt.Errorf("failed to fetch build records (%s)", err.Error()),
+			fmt.Errorf("failed to fetch queued build records (%s)", err.Error()),
+		)
+	}
+
+	activeBuilds, err := db.GetActiveBuilds(r.DB)
+	if err != nil {
+		return util.InternalError(
+			logger,
+			fmt.Errorf("failed to fetch active build records (%s)", err.Error()),
 		)
 	}
 
 	return response.JSON(map[string]interface{}{
-		"builds": builds,
+		"queued": queuedBuilds,
+		"active": activeBuilds,
 	})
 }
