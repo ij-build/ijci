@@ -120,3 +120,18 @@ func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 
 	return nil
 }
+
+func DeleteBuildLogsForBuild(db *LoggingDB, logger nacelle.Logger, buildID uuid.UUID) error {
+	if _, err := db.Exec(
+		`delete from build_logs where build_id = $1`,
+		buildID,
+	); err != nil {
+		return handlePostgresError(err, "delete error")
+	}
+
+	logger.InfoWithFields(nacelle.LogFields{
+		"build_id": buildID,
+	}, "Build logs deleted")
+
+	return nil
+}

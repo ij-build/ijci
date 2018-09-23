@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -8,9 +9,11 @@ import (
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/amqp/message"
 	"github.com/efritz/ijci/api/db"
+	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/util"
 	"github.com/efritz/nacelle"
 	"github.com/efritz/response"
+	"github.com/google/uuid"
 )
 
 //
@@ -62,6 +65,42 @@ func getBuildLog(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Reque
 	}
 
 	return buildLog, nil
+}
+
+//
+// Update Helpers
+
+func deleteBuildLogFilesForProject(ctx context.Context, loggingDB *db.LoggingDB, s3 s3.Client, projectID uuid.UUID) error {
+	buildLogs, err := db.GetBuildLogsForProject(loggingDB, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch build log records (%s)", err.Error())
+	}
+
+	return deleteBuildLogFiles(ctx, s3, buildLogs)
+}
+
+func deleteBuildLogFilesForBuild(ctx context.Context, loggingDB *db.LoggingDB, s3 s3.Client, buildID uuid.UUID) error {
+	buildLogs, err := db.GetBuildLogs(loggingDB, buildID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch build log records (%s)", err.Error())
+	}
+
+	return deleteBuildLogFiles(ctx, s3, buildLogs)
+}
+
+func deleteBuildLogFiles(ctx context.Context, s3 s3.Client, buildLogs []*db.BuildLog) error {
+	keys := []string{}
+	for _, buildLog := range buildLogs {
+		if buildLog.Key != nil {
+			keys = append(keys, *buildLog.Key)
+		}
+	}
+
+	if err := s3.Delete(ctx, keys); err != nil {
+		return fmt.Errorf("failed to delete build logs (%s)", err.Error())
+	}
+
+	return nil
 }
 
 //

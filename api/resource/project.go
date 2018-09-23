@@ -73,26 +73,8 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 }
 
 func (r *ProjectResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	buildLogs, err := db.GetBuildLogsForProject(r.DB, util.GetProjectID(req))
-	if err != nil {
-		return util.InternalError(
-			logger,
-			fmt.Errorf("failed to fetch build log records (%s)", err.Error()),
-		)
-	}
-
-	keys := []string{}
-	for _, buildLog := range buildLogs {
-		if buildLog.Key != nil {
-			keys = append(keys, *buildLog.Key)
-		}
-	}
-
-	if err := r.S3.Delete(ctx, keys); err != nil {
-		return util.InternalError(
-			logger,
-			fmt.Errorf("failed to delete build (%s)", err.Error()),
-		)
+	if err := deleteBuildLogFilesForProject(ctx, r.DB, r.S3, util.GetProjectID(req)); err != nil {
+		return util.InternalError(logger, err)
 	}
 
 	if err := db.DeleteProject(r.DB, logger, util.GetProjectID(req)); err != nil {
