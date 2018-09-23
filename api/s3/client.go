@@ -26,6 +26,8 @@ type (
 	}
 )
 
+const MaxBatchSize = 1000
+
 func NewClient(bucketName string, api s3iface.S3API) *client {
 	return &client{
 		bucketName: bucketName,
@@ -61,23 +63,36 @@ func (c *client) Download(ctx context.Context, key string) (string, error) {
 }
 
 func (c *client) Delete(ctx context.Context, keys []string) error {
-	// TODO - break into batches of 1000
-	objects := []*s3.ObjectIdentifier{}
-	for _, key := range keys {
-		objects = append(objects, &s3.ObjectIdentifier{Key: aws.String(key)})
+	for len(keys) > 0 {
+		batch := keys
+		if len(keys) > MaxBatchSize {
+			batch = keys[:MaxBatchSize]
+		}
+
+		objects := []*s3.ObjectIdentifier{}
+		for _, key := range batch {
+			objects = append(objects, &s3.ObjectIdentifier{Key: aws.String(key)})
+		}
+
+		resp, err := c.api.DeleteObjectsWithContext(ctx, &s3.DeleteObjectsInput{
+			Bucket: aws.String(c.bucketName),
+			Delete: &s3.Delete{
+				Objects: objects,
+				Quiet:   aws.Bool(true),
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if len(resp.Errors) > 0 {
+			return fmt.Errorf("failed to delete build logs (%s)", resp.Errors[0])
+		}
+
+		// Prepare next batch
+		keys = keys[len(batch):]
 	}
 
-	resp, err := c.api.DeleteObjectsWithContext(ctx, &s3.DeleteObjectsInput{
-		Bucket: aws.String(c.bucketName),
-		Delete: &s3.Delete{
-			Objects: objects,
-			Quiet:   aws.Bool(true),
-		},
-	})
-
-	if err != nil || len(resp.Errors) == 0 {
-		return err
-	}
-
-	return fmt.Errorf("failed to delete build logs (%s)", resp.Errors[0])
+	return nil
 }
