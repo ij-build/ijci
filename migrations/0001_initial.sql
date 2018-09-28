@@ -4,7 +4,8 @@ create type build_status as enum (
     'in-progress',
     'errored',
     'failed',
-    'succeeded'
+    'succeeded',
+    'canceled'
 );
 
 create table projects (
@@ -31,8 +32,7 @@ create table builds (
     created_at timestamp with time zone not null,
     queued_at timestamp with time zone not null,
     started_at timestamp with time zone,
-    completed_at timestamp with time zone,
-    canceled boolean not null default false
+    completed_at timestamp with time zone
 );
 
 alter table projects add column last_build_id uuid references builds;

@@ -14,7 +14,7 @@ import (
 
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/api/s3"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (
@@ -41,7 +41,7 @@ type (
 )
 
 func (r *BuildResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
@@ -68,12 +68,12 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	if build.Canceled {
+	if util.IsTerminal(build.BuildStatus) {
 		return response.Empty(http.StatusConflict)
 	}
 
@@ -91,17 +91,17 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 		build.BuildStatus = *payload.BuildStatus
 	}
 
-	build.AgentAddr = orOptionalString(payload.AgentAddr, build.AgentAddr)
-	build.CommitBranch = orOptionalString(payload.CommitBranch, build.CommitBranch)
-	build.CommitHash = orOptionalString(payload.CommitHash, build.CommitHash)
-	build.CommitMessage = orOptionalString(payload.CommitMessage, build.CommitMessage)
-	build.CommitAuthorName = orOptionalString(payload.CommitAuthorName, build.CommitAuthorName)
-	build.CommitAuthorEmail = orOptionalString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
-	build.CommitAuthoredAt = orOptionalTime(payload.CommitAuthoredAt, build.CommitAuthoredAt)
-	build.CommitCommitterName = orOptionalString(payload.CommitCommitterName, build.CommitCommitterName)
-	build.CommitCommitterEmail = orOptionalString(payload.CommitCommitterEmail, build.CommitCommitterEmail)
-	build.CommitCommittedAt = orOptionalTime(payload.CommitCommittedAt, build.CommitCommittedAt)
-	build.ErrorMessage = orOptionalString(payload.ErrorMessage, build.ErrorMessage)
+	build.AgentAddr = util.OrOptionalString(payload.AgentAddr, build.AgentAddr)
+	build.CommitBranch = util.OrOptionalString(payload.CommitBranch, build.CommitBranch)
+	build.CommitHash = util.OrOptionalString(payload.CommitHash, build.CommitHash)
+	build.CommitMessage = util.OrOptionalString(payload.CommitMessage, build.CommitMessage)
+	build.CommitAuthorName = util.OrOptionalString(payload.CommitAuthorName, build.CommitAuthorName)
+	build.CommitAuthorEmail = util.OrOptionalString(payload.CommitAuthorEmail, build.CommitAuthorEmail)
+	build.CommitAuthoredAt = util.OrOptionalTime(payload.CommitAuthoredAt, build.CommitAuthoredAt)
+	build.CommitCommitterName = util.OrOptionalString(payload.CommitCommitterName, build.CommitCommitterName)
+	build.CommitCommitterEmail = util.OrOptionalString(payload.CommitCommitterEmail, build.CommitCommitterEmail)
+	build.CommitCommittedAt = util.OrOptionalTime(payload.CommitCommittedAt, build.CommitCommittedAt)
+	build.ErrorMessage = util.OrOptionalString(payload.ErrorMessage, build.ErrorMessage)
 
 	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(
@@ -116,16 +116,16 @@ func (r *BuildResource) Patch(ctx context.Context, req *http.Request, logger nac
 }
 
 func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	if !build.Canceled && !util.IsTerminal(build.BuildStatus) {
+	if !util.IsTerminal(build.BuildStatus) {
 		return response.Empty(http.StatusConflict)
 	}
 
-	if err := deleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
+	if err := util.DeleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
 		return util.InternalError(logger, err)
 	}
 

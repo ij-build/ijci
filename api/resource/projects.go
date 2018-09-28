@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (
@@ -29,7 +29,12 @@ type (
 )
 
 func (r *ProjectsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	projects, err := db.GetProjects(r.DB)
+	meta, resp := util.GetPageMeta(req)
+	if resp != nil {
+		return resp
+	}
+
+	projects, _, err := db.GetProjects(r.DB, meta)
 	if err != nil {
 		return util.InternalError(
 			logger,

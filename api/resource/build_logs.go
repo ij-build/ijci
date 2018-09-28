@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (

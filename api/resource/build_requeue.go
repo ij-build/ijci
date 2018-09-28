@@ -13,7 +13,7 @@ import (
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/api/s3"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type BuildRequeueResource struct {
@@ -24,12 +24,12 @@ type BuildRequeueResource struct {
 }
 
 func (r *BuildRequeueResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	if err := deleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
+	if err := util.DeleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
 		return util.InternalError(logger, err)
 	}
 
@@ -56,7 +56,7 @@ func (r *BuildRequeueResource) Post(ctx context.Context, req *http.Request, logg
 		)
 	}
 
-	if err := queueBuild(r.Producer, build); err != nil {
+	if err := util.QueueBuild(r.Producer, build); err != nil {
 		return util.InternalError(
 			logger,
 			err,

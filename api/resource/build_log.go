@@ -15,7 +15,7 @@ import (
 
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/api/s3"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (
@@ -49,7 +49,7 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 		)
 	}
 
-	buildLog, resp := getBuildLog(r.DB, logger, req)
+	buildLog, resp := util.GetBuildLog(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
@@ -80,7 +80,7 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 }
 
 func (r *BuildLogResource) getContentFromS3(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	buildLog, resp := getBuildLog(r.DB, logger, req)
+	buildLog, resp := util.GetBuildLog(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
@@ -103,7 +103,7 @@ func (r *BuildLogResource) getContentFromS3(ctx context.Context, req *http.Reque
 }
 
 func (r *BuildLogResource) getContentFromAgent(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}

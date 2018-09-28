@@ -8,55 +8,44 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type (
-	Project struct {
-		ProjectID            uuid.UUID  `db:"project_id" json:"project_id"`
-		Name                 string     `db:"name" json:"name"`
-		RepositoryURL        string     `db:"repository_url" json:"repository_url"`
-		LastBuildID          *uuid.UUID `db:"last_build_id" json:"last_build_id"`
-		LastBuildStatus      *string    `db:"last_build_status" json:"last_build_status"`
-		LastBuildCompletedAt *time.Time `db:"last_build_completed_at" json:"last_build_completed_at"`
-	}
+type Project struct {
+	ProjectID            uuid.UUID  `db:"project_id" json:"project_id"`
+	Name                 string     `db:"name" json:"name"`
+	RepositoryURL        string     `db:"repository_url" json:"repository_url"`
+	LastBuildID          *uuid.UUID `db:"last_build_id" json:"last_build_id"`
+	LastBuildStatus      *string    `db:"last_build_status" json:"last_build_status"`
+	LastBuildCompletedAt *time.Time `db:"last_build_completed_at" json:"last_build_completed_at"`
+}
 
-	ProjectWithBuilds struct {
-		*Project
-		Builds []*Build `json:"builds"`
-	}
-)
-
-func GetProjects(db *LoggingDB) ([]*Project, error) {
+func GetProjects(db *LoggingDB, meta *PageMeta) ([]*Project, *PagedResultMeta, error) {
 	query := `
 	select *
 	from projects
 	order by last_build_completed_at desc, project_id
+	limit $1 offset $2
 	`
 
 	projects := []*Project{}
-	if err := sqlx.Select(db, &projects, query); err != nil {
-		return nil, handlePostgresError(err, "select error")
+	if err := sqlx.Select(db, &projects, query, meta.Limit(), meta.Offset()); err != nil {
+		return nil, nil, handlePostgresError(err, "select error")
 	}
 
-	return projects, nil
+	return projects, &PagedResultMeta{Total: -1}, nil // TODO
 }
 
-func GetProject(db *LoggingDB, projectID uuid.UUID) (*ProjectWithBuilds, error) {
+func GetProject(db *LoggingDB, projectID uuid.UUID) (*Project, error) {
 	query := `
 	select *
 	from projects
 	where project_id = $1
 	`
 
-	p := &Project{}
-	if err := sqlx.Get(db, p, query, projectID); err != nil {
+	project := &Project{}
+	if err := sqlx.Get(db, project, query, projectID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
-	builds, err := GetBuildsForProject(db, projectID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ProjectWithBuilds{Project: p, Builds: builds}, nil
+	return project, nil
 }
 
 func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL string) (*Project, error) {

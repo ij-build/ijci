@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/efritz/chevron"
 	"github.com/efritz/nacelle"
@@ -11,7 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type BuildCancelResource struct {
@@ -20,16 +21,18 @@ type BuildCancelResource struct {
 }
 
 func (r *BuildCancelResource) Post(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	build, resp := getBuild(r.DB, logger, req)
+	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	if build.Canceled || util.IsTerminal(build.BuildStatus) {
+	if util.IsTerminal(build.BuildStatus) {
 		return response.Empty(http.StatusConflict)
 	}
 
-	build.Canceled = true
+	now := time.Now()
+	build.BuildStatus = "canceled"
+	build.CompletedAt = &now
 
 	if err := db.UpdateBuild(r.DB, logger, build.Build); err != nil {
 		return util.InternalError(

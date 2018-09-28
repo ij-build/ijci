@@ -15,7 +15,7 @@ import (
 
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (
@@ -34,7 +34,12 @@ type (
 )
 
 func (r *BuildsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	builds, err := db.GetBuilds(r.DB)
+	meta, resp := util.GetPageMeta(req)
+	if resp != nil {
+		return resp
+	}
+
+	builds, _, err := db.GetBuilds(r.DB, meta)
 	if err != nil {
 		return util.InternalError(
 			logger,
@@ -85,7 +90,7 @@ func (r *BuildsResource) Post(ctx context.Context, req *http.Request, logger nac
 		)
 	}
 
-	if err := queueBuild(r.Producer, build); err != nil {
+	if err := util.QueueBuild(r.Producer, build); err != nil {
 		return util.InternalError(
 			logger,
 			err,
@@ -108,7 +113,7 @@ func (r *BuildsResource) getProject(projectID, repositoryURL *string, logger nac
 			return nil, err
 		}
 
-		return project.Project, nil
+		return project, nil
 	}
 
 	return db.GetOrCreateProject(r.DB, logger, *repositoryURL)

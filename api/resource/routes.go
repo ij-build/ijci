@@ -23,13 +23,15 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 
 	register("/projects", &ProjectsResource{}, makePostSchema("project"))
 	register("/projects/{project_id:<id>}", &ProjectResource{}, makePatchSchema("project"))
+	register("/projects/{project_id:<id>}/builds", &ProjectBuildsResource{})
 	register("/builds", &BuildsResource{}, makePostSchema("build"))
+	register("/builds/active", &ActiveBuildsResource{})
+	register("/builds/queued", &QueuedBuildsResource{})
 	register("/builds/{build_id:<id>}", &BuildResource{}, makePatchSchema("build"))
 	register("/builds/{build_id:<id>}/cancel", &BuildCancelResource{})
 	register("/builds/{build_id:<id>}/requeue", &BuildRequeueResource{})
 	register("/builds/{build_id:<id>}/logs", &BuildLogsResource{}, makePostSchema("build-log"))
 	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{}, makePatchSchema("build-log"))
-	register("/queue", &BuildQueueResource{})
 	return nil
 }
 

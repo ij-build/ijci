@@ -13,7 +13,7 @@ import (
 
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/api/s3"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/api/util"
 )
 
 type (
@@ -52,15 +52,15 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 		)
 	}
 
-	project, resp := getProject(r.DB, logger, req)
+	project, resp := util.GetProject(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	project.Name = orString(payload.Name, project.Name)
-	project.RepositoryURL = orString(payload.RepositoryURL, project.RepositoryURL)
+	project.Name = util.OrString(payload.Name, project.Name)
+	project.RepositoryURL = util.OrString(payload.RepositoryURL, project.RepositoryURL)
 
-	if err := db.UpdateProject(r.DB, logger, project.Project); err != nil {
+	if err := db.UpdateProject(r.DB, logger, project); err != nil {
 		return util.InternalError(
 			logger,
 			fmt.Errorf("failed to update project (%s)", err.Error()),
@@ -73,7 +73,7 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 }
 
 func (r *ProjectResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	if err := deleteBuildLogFilesForProject(ctx, r.DB, r.S3, util.GetProjectID(req)); err != nil {
+	if err := util.DeleteBuildLogFilesForProject(ctx, r.DB, r.S3, util.GetProjectID(req)); err != nil {
 		return util.InternalError(logger, err)
 	}
 

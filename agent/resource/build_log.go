@@ -10,7 +10,7 @@ import (
 	"github.com/efritz/response"
 
 	"github.com/efritz/ijci/agent/log"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/agent/util"
 )
 
 type BuildLogResource struct {

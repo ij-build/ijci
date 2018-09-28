@@ -9,7 +9,7 @@ import (
 	"github.com/efritz/response"
 
 	agentctx "github.com/efritz/ijci/agent/context"
-	"github.com/efritz/ijci/util"
+	"github.com/efritz/ijci/agent/util"
 )
 
 type BuildCancelResource struct {

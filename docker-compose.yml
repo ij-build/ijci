@@ -8,6 +8,7 @@ services:
       - LOG_SHORT_TIME=true
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
+      - LOG_SQL_QUERIES=true
       - POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
       - S3_ENDPOINT=http://minio:9000
       - AWS_REGION=us-east-1
@@ -20,6 +21,7 @@ services:
       - minio
       - postgres
       - rabbitmq
+      - migrate
     ports:
       - 5000:5000
 

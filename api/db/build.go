@@ -28,7 +28,6 @@ type (
 		QueuedAt             time.Time  `db:"queued_at" json:"queued_at"`
 		StartedAt            *time.Time `db:"started_at" json:"started_at"`
 		CompletedAt          *time.Time `db:"completed_at" json:"completed_at"`
-		Canceled             bool       `db:"canceled" json:"canceled"`
 	}
 
 	BuildWithProject struct {
@@ -42,7 +41,7 @@ type (
 	}
 )
 
-func GetBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
+func GetBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
 		builds.*,
@@ -55,17 +54,18 @@ func GetBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
 	from builds
 	join projects on builds.project_id = projects.project_id
 	order by created_at desc
+	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query); err != nil {
-		return nil, handlePostgresError(err, "select error")
+	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
+		return nil, nil, handlePostgresError(err, "select error")
 	}
 
-	return builds, nil
+	return builds, &PagedResultMeta{Total: -1}, nil // TODO
 }
 
-func GetQueuedBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
+func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
 		builds.*,
@@ -79,17 +79,18 @@ func GetQueuedBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
 	join projects on builds.project_id = projects.project_id
 	where build_status = 'queued'
 	order by created_at desc
+	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query); err != nil {
-		return nil, handlePostgresError(err, "select error")
+	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
+		return nil, nil, handlePostgresError(err, "select error")
 	}
 
-	return builds, nil
+	return builds, &PagedResultMeta{Total: -1}, nil // TODO
 }
 
-func GetActiveBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
+func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
 		builds.*,
@@ -103,25 +104,40 @@ func GetActiveBuilds(db *LoggingDB) ([]*BuildWithProject, error) {
 	join projects on builds.project_id = projects.project_id
 	where build_status = 'in-progress'
 	order by created_at desc
+	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query); err != nil {
-		return nil, handlePostgresError(err, "select error")
+	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
+		return nil, nil, handlePostgresError(err, "select error")
 	}
 
-	return builds, nil
+	return builds, &PagedResultMeta{Total: -1}, nil // TODO
 }
 
-func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID) ([]*Build, error) {
-	query := `select * from builds where project_id = $1 order by created_at desc`
+func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta) ([]*Build, *PagedResultMeta, error) {
+	query := `
+	select * from builds
+	where
+		project_id = $1
+	order by created_at desc
+	limit $2 offset $3
+	`
 
 	builds := []*Build{}
-	if err := sqlx.Select(db, &builds, query, projectID); err != nil {
-		return nil, handlePostgresError(err, "select error")
+
+	if err := sqlx.Select(
+		db,
+		&builds,
+		query,
+		projectID,
+		meta.Limit(),
+		meta.Offset(),
+	); err != nil {
+		return nil, nil, handlePostgresError(err, "select error")
 	}
 
-	return builds, nil
+	return builds, &PagedResultMeta{Total: -1}, nil // TODO
 }
 
 func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
@@ -201,10 +217,9 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		error_message = $12,
 		queued_at = $13,
 		started_at = $14,
-		completed_at = $15,
-		canceled = $16
+		completed_at = $15
 	where
-		build_id = $17
+		build_id = $16
 	`
 
 	if _, err := tx.Exec(
@@ -224,7 +239,6 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		b.QueuedAt,
 		b.StartedAt,
 		b.CompletedAt,
-		b.Canceled,
 		b.BuildID,
 	); err != nil {
 		return handlePostgresError(err, "update error")
