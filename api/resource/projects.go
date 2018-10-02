@@ -29,12 +29,12 @@ type (
 )
 
 func (r *ProjectsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	meta, resp := util.GetPageMeta(req)
+	pageMeta, resp := util.GetPageMeta(req)
 	if resp != nil {
 		return resp
 	}
 
-	projects, _, err := db.GetProjects(r.DB, meta)
+	projects, pagedResultsMeta, err := db.GetProjects(r.DB, pageMeta)
 	if err != nil {
 		return util.InternalError(
 			logger,
@@ -44,6 +44,7 @@ func (r *ProjectsResource) Get(ctx context.Context, req *http.Request, logger na
 
 	return response.JSON(map[string]interface{}{
 		"projects": projects,
+		"meta":     pagedResultsMeta,
 	})
 }
 

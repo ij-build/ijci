@@ -54,15 +54,15 @@ func GetBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResult
 	from builds
 	join projects on builds.project_id = projects.project_id
 	order by created_at desc
-	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
-		return nil, nil, handlePostgresError(err, "select error")
+	pageResults, err := PagedSelect(db, meta, query, &builds)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return builds, &PagedResultMeta{Total: -1}, nil // TODO
+	return builds, pageResults, nil
 }
 
 func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
@@ -79,15 +79,15 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 	join projects on builds.project_id = projects.project_id
 	where build_status = 'queued'
 	order by created_at desc
-	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
-		return nil, nil, handlePostgresError(err, "select error")
+	pagedResults, err := PagedSelect(db, meta, query, &builds)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return builds, &PagedResultMeta{Total: -1}, nil // TODO
+	return builds, pagedResults, nil
 }
 
 func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
@@ -104,15 +104,15 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 	join projects on builds.project_id = projects.project_id
 	where build_status = 'in-progress'
 	order by created_at desc
-	limit $1 offset $2
 	`
 
 	builds := []*BuildWithProject{}
-	if err := sqlx.Select(db, &builds, query, meta.Limit(), meta.Offset()); err != nil {
-		return nil, nil, handlePostgresError(err, "select error")
+	pagedResults, err := PagedSelect(db, meta, query, &builds)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return builds, &PagedResultMeta{Total: -1}, nil // TODO
+	return builds, pagedResults, nil
 }
 
 func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta) ([]*Build, *PagedResultMeta, error) {
@@ -121,23 +121,15 @@ func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta) ([]
 	where
 		project_id = $1
 	order by created_at desc
-	limit $2 offset $3
 	`
 
 	builds := []*Build{}
-
-	if err := sqlx.Select(
-		db,
-		&builds,
-		query,
-		projectID,
-		meta.Limit(),
-		meta.Offset(),
-	); err != nil {
-		return nil, nil, handlePostgresError(err, "select error")
+	pagedResults, err := PagedSelect(db, meta, query, &builds, projectID)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return builds, &PagedResultMeta{Total: -1}, nil // TODO
+	return builds, pagedResults, nil
 }
 
 func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {

@@ -34,12 +34,12 @@ type (
 )
 
 func (r *BuildsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	meta, resp := util.GetPageMeta(req)
+	pageMeta, resp := util.GetPageMeta(req)
 	if resp != nil {
 		return resp
 	}
 
-	builds, _, err := db.GetBuilds(r.DB, meta)
+	builds, pagedResultsMeta, err := db.GetBuilds(r.DB, pageMeta)
 	if err != nil {
 		return util.InternalError(
 			logger,
@@ -49,6 +49,7 @@ func (r *BuildsResource) Get(ctx context.Context, req *http.Request, logger nace
 
 	return response.JSON(map[string]interface{}{
 		"builds": builds,
+		"meta":   pagedResultsMeta,
 	})
 }
 

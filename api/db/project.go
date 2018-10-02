@@ -22,15 +22,15 @@ func GetProjects(db *LoggingDB, meta *PageMeta) ([]*Project, *PagedResultMeta, e
 	select *
 	from projects
 	order by last_build_completed_at desc, project_id
-	limit $1 offset $2
 	`
 
 	projects := []*Project{}
-	if err := sqlx.Select(db, &projects, query, meta.Limit(), meta.Offset()); err != nil {
-		return nil, nil, handlePostgresError(err, "select error")
+	pageResults, err := PagedSelect(db, meta, query, &projects)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return projects, &PagedResultMeta{Total: -1}, nil // TODO
+	return projects, pageResults, nil
 }
 
 func GetProject(db *LoggingDB, projectID uuid.UUID) (*Project, error) {

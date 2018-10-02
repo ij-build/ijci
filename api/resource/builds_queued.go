@@ -19,12 +19,12 @@ type QueuedBuildsResource struct {
 }
 
 func (r *QueuedBuildsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	meta, resp := util.GetPageMeta(req)
+	pageMeta, resp := util.GetPageMeta(req)
 	if resp != nil {
 		return resp
 	}
 
-	builds, _, err := db.GetQueuedBuilds(r.DB, meta)
+	builds, pagedResultsMeta, err := db.GetQueuedBuilds(r.DB, pageMeta)
 	if err != nil {
 		return util.InternalError(
 			logger,
@@ -34,5 +34,6 @@ func (r *QueuedBuildsResource) Get(ctx context.Context, req *http.Request, logge
 
 	return response.JSON(map[string]interface{}{
 		"builds": builds,
+		"meta":   pagedResultsMeta,
 	})
 }

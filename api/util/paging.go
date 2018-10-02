@@ -3,10 +3,10 @@ package util
 import (
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/efritz/response"
-	"github.com/gorilla/mux"
 
 	"github.com/efritz/ijci/api/db"
 )
@@ -17,12 +17,12 @@ const (
 )
 
 func GetPageMeta(req *http.Request) (*db.PageMeta, response.Response) {
-	page, ok := getPage(mux.Vars(req))
+	page, ok := getPage(req.URL.Query())
 	if !ok {
 		return nil, response.Empty(http.StatusBadRequest)
 	}
 
-	pageSize, ok := getPageSize(mux.Vars(req))
+	pageSize, ok := getPageSize(req.URL.Query())
 	if !ok {
 		return nil, response.Empty(http.StatusBadRequest)
 	}
@@ -33,16 +33,16 @@ func GetPageMeta(req *http.Request) (*db.PageMeta, response.Response) {
 	}, nil
 }
 
-func getPage(vars map[string]string) (int, bool) {
-	return extractPageValue(vars, "page", 1, math.MaxInt32)
+func getPage(values url.Values) (int, bool) {
+	return extractPageValue(values, "page", 1, math.MaxInt32)
 }
 
-func getPageSize(vars map[string]string) (int, bool) {
-	return extractPageValue(vars, "per_page", DefaultPageSize, MaxPageSize)
+func getPageSize(values url.Values) (int, bool) {
+	return extractPageValue(values, "per_page", DefaultPageSize, MaxPageSize)
 }
 
-func extractPageValue(vars map[string]string, key string, defaultValue, maxValue int) (int, bool) {
-	raw := vars[key]
+func extractPageValue(values url.Values, key string, defaultValue, maxValue int) (int, bool) {
+	raw := values.Get(key)
 	if raw == "" {
 		return defaultValue, true
 	}
@@ -50,7 +50,6 @@ func extractPageValue(vars map[string]string, key string, defaultValue, maxValue
 	val, err := strconv.Atoi(raw)
 	if err != nil || val < 1 {
 		return 0, false
-
 	}
 
 	if val > maxValue {
