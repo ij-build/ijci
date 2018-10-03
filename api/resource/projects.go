@@ -34,7 +34,7 @@ func (r *ProjectsResource) Get(ctx context.Context, req *http.Request, logger na
 		return resp
 	}
 
-	projects, pagedResultsMeta, err := db.GetProjects(r.DB, pageMeta)
+	projects, pagedResultsMeta, err := db.GetProjects(r.DB, pageMeta, req.URL.Query().Get("filter"))
 	if err != nil {
 		return util.InternalError(
 			logger,

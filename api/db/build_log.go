@@ -19,8 +19,7 @@ type BuildLog struct {
 
 func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 	query := `
-	select *
-	from build_logs
+	select * from build_logs
 	where build_id = $1
 	order by created_at
 	`
@@ -51,8 +50,7 @@ func GetBuildLogsForProject(db *LoggingDB, projectID uuid.UUID) ([]*BuildLog, er
 
 func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
 	query := `
-	select *
-	from build_logs
+	select * from build_logs
 	where build_id = $1 and build_log_id = $2
 	`
 

@@ -24,7 +24,13 @@ func (r *ProjectBuildsResource) Get(ctx context.Context, req *http.Request, logg
 		return resp
 	}
 
-	builds, pagedResultsMeta, err := db.GetBuildsForProject(r.DB, util.GetProjectID(req), pageMeta)
+	builds, pagedResultsMeta, err := db.GetBuildsForProject(
+		r.DB,
+		util.GetProjectID(req),
+		pageMeta,
+		req.URL.Query().Get("filter"),
+	)
+
 	if err != nil {
 		return util.InternalError(
 			logger,

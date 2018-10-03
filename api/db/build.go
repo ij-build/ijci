@@ -10,24 +10,25 @@ import (
 
 type (
 	Build struct {
-		BuildID              uuid.UUID  `db:"build_id" json:"build_id"`
-		ProjectID            uuid.UUID  `db:"project_id" json:"project_id"`
-		BuildStatus          string     `db:"build_status" json:"build_status"`
-		AgentAddr            *string    `db:"agent_addr" json:"agent_addr"`
-		CommitBranch         *string    `db:"commit_branch" json:"commit_branch"`
-		CommitHash           *string    `db:"commit_hash" json:"commit_hash"`
-		CommitMessage        *string    `db:"commit_message" json:"commit_message"`
-		CommitAuthorName     *string    `db:"commit_author_name" json:"commit_author_name"`
-		CommitAuthorEmail    *string    `db:"commit_author_email" json:"commit_author_email"`
-		CommitAuthoredAt     *time.Time `db:"commit_authored_at" json:"commit_authored_at"`
-		CommitCommitterName  *string    `db:"commit_committer_name" json:"commit_committer_name"`
-		CommitCommitterEmail *string    `db:"commit_committer_email" json:"commit_committer_email"`
-		CommitCommittedAt    *time.Time `db:"commit_committed_at" json:"commit_committed_at"`
-		ErrorMessage         *string    `db:"error_message" json:"error_message"`
-		CreatedAt            time.Time  `db:"created_at" json:"created_at"`
-		QueuedAt             time.Time  `db:"queued_at" json:"queued_at"`
-		StartedAt            *time.Time `db:"started_at" json:"started_at"`
-		CompletedAt          *time.Time `db:"completed_at" json:"completed_at"`
+		BuildID              uuid.UUID   `db:"build_id" json:"build_id"`
+		ProjectID            uuid.UUID   `db:"project_id" json:"project_id"`
+		BuildStatus          string      `db:"build_status" json:"build_status"`
+		AgentAddr            *string     `db:"agent_addr" json:"agent_addr"`
+		CommitBranch         *string     `db:"commit_branch" json:"commit_branch"`
+		CommitHash           *string     `db:"commit_hash" json:"commit_hash"`
+		CommitMessage        *string     `db:"commit_message" json:"commit_message"`
+		CommitAuthorName     *string     `db:"commit_author_name" json:"commit_author_name"`
+		CommitAuthorEmail    *string     `db:"commit_author_email" json:"commit_author_email"`
+		CommitAuthoredAt     *time.Time  `db:"commit_authored_at" json:"commit_authored_at"`
+		CommitCommitterName  *string     `db:"commit_committer_name" json:"commit_committer_name"`
+		CommitCommitterEmail *string     `db:"commit_committer_email" json:"commit_committer_email"`
+		CommitCommittedAt    *time.Time  `db:"commit_committed_at" json:"commit_committed_at"`
+		ErrorMessage         *string     `db:"error_message" json:"error_message"`
+		CreatedAt            time.Time   `db:"created_at" json:"created_at"`
+		QueuedAt             time.Time   `db:"queued_at" json:"queued_at"`
+		StartedAt            *time.Time  `db:"started_at" json:"started_at"`
+		CompletedAt          *time.Time  `db:"completed_at" json:"completed_at"`
+		TextSearchVector     interface{} `db:"tsv" json:"-"`
 	}
 
 	BuildWithProject struct {
@@ -41,23 +42,24 @@ type (
 	}
 )
 
-func GetBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
-		builds.*,
-		projects.project_id "project.project_id",
-		projects.name "project.name",
-		projects.repository_url "project.repository_url",
-		projects.last_build_id "project.last_build_id",
-		projects.last_build_status "project.last_build_status",
-		projects.last_build_completed_at "project.last_build_completed_at"
-	from builds
-	join projects on builds.project_id = projects.project_id
+		b.*,
+		p.project_id "project.project_id",
+		p.name "project.name",
+		p.repository_url "project.repository_url",
+		p.last_build_id "project.last_build_id",
+		p.last_build_status "project.last_build_status",
+		p.last_build_completed_at "project.last_build_completed_at"
+	from builds b
+	join projects p on b.project_id = p.project_id
+	where $1 = '' or (b.tsv @@ to_tsquery($1))
 	order by created_at desc
 	`
 
 	builds := []*BuildWithProject{}
-	pageResults, err := PagedSelect(db, meta, query, &builds)
+	pageResults, err := PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -68,15 +70,15 @@ func GetBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResult
 func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
-		builds.*,
-		projects.project_id "project.project_id",
-		projects.name "project.name",
-		projects.repository_url "project.repository_url",
-		projects.last_build_id "project.last_build_id",
-		projects.last_build_status "project.last_build_status",
-		projects.last_build_completed_at "project.last_build_completed_at"
-	from builds
-	join projects on builds.project_id = projects.project_id
+		b.*,
+		p.project_id "project.project_id",
+		p.name "project.name",
+		p.repository_url "project.repository_url",
+		p.last_build_id "project.last_build_id",
+		p.last_build_status "project.last_build_status",
+		p.last_build_completed_at "project.last_build_completed_at"
+	from builds b
+	join projects p on b.project_id = p.project_id
 	where build_status = 'queued'
 	order by created_at desc
 	`
@@ -93,15 +95,15 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
-		builds.*,
-		projects.project_id "project.project_id",
-		projects.name "project.name",
-		projects.repository_url "project.repository_url",
-		projects.last_build_id "project.last_build_id",
-		projects.last_build_status "project.last_build_status",
-		projects.last_build_completed_at "project.last_build_completed_at"
-	from builds
-	join projects on builds.project_id = projects.project_id
+		b.*,
+		p.project_id "project.project_id",
+		p.name "project.name",
+		p.repository_url "project.repository_url",
+		p.last_build_id "project.last_build_id",
+		p.last_build_status "project.last_build_status",
+		p.last_build_completed_at "project.last_build_completed_at"
+	from builds b
+	join projects p on b.project_id = p.project_id
 	where build_status = 'in-progress'
 	order by created_at desc
 	`
@@ -115,16 +117,15 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 	return builds, pagedResults, nil
 }
 
-func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta) ([]*Build, *PagedResultMeta, error) {
+func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta, filter string) ([]*Build, *PagedResultMeta, error) {
 	query := `
 	select * from builds
-	where
-		project_id = $1
+	where project_id = $1 and ($2 = '' or (tsv @@ to_tsquery($2)))
 	order by created_at desc
 	`
 
 	builds := []*Build{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds, projectID)
+	pagedResults, err := PagedSelect(db, meta, query, &builds, projectID, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -135,15 +136,15 @@ func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta) ([]
 func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
 	query := `
 	select
-		builds.*,
-		projects.project_id "project.project_id",
-		projects.name "project.name",
-		projects.repository_url "project.repository_url",
-		projects.last_build_id "project.last_build_id",
-		projects.last_build_status "project.last_build_status",
-		projects.last_build_completed_at "project.last_build_completed_at"
-	from builds
-	join projects on builds.project_id = projects.project_id
+		b.*,
+		p.project_id "project.project_id",
+		p.name "project.name",
+		p.repository_url "project.repository_url",
+		p.last_build_id "project.last_build_id",
+		p.last_build_status "project.last_build_status",
+		p.last_build_completed_at "project.last_build_completed_at"
+	from builds b
+	join projects p on b.project_id = p.project_id
 	where build_id = $1
 	`
 

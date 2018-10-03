@@ -9,23 +9,24 @@ import (
 )
 
 type Project struct {
-	ProjectID            uuid.UUID  `db:"project_id" json:"project_id"`
-	Name                 string     `db:"name" json:"name"`
-	RepositoryURL        string     `db:"repository_url" json:"repository_url"`
-	LastBuildID          *uuid.UUID `db:"last_build_id" json:"last_build_id"`
-	LastBuildStatus      *string    `db:"last_build_status" json:"last_build_status"`
-	LastBuildCompletedAt *time.Time `db:"last_build_completed_at" json:"last_build_completed_at"`
+	ProjectID            uuid.UUID   `db:"project_id" json:"project_id"`
+	Name                 string      `db:"name" json:"name"`
+	RepositoryURL        string      `db:"repository_url" json:"repository_url"`
+	LastBuildID          *uuid.UUID  `db:"last_build_id" json:"last_build_id"`
+	LastBuildStatus      *string     `db:"last_build_status" json:"last_build_status"`
+	LastBuildCompletedAt *time.Time  `db:"last_build_completed_at" json:"last_build_completed_at"`
+	TextSearchVector     interface{} `db:"tsv" json:"-"`
 }
 
-func GetProjects(db *LoggingDB, meta *PageMeta) ([]*Project, *PagedResultMeta, error) {
+func GetProjects(db *LoggingDB, meta *PageMeta, filter string) ([]*Project, *PagedResultMeta, error) {
 	query := `
-	select *
-	from projects
+	select * from projects
+	where $1 = '' or (tsv @@ to_tsquery($1))
 	order by last_build_completed_at desc, project_id
 	`
 
 	projects := []*Project{}
-	pageResults, err := PagedSelect(db, meta, query, &projects)
+	pageResults, err := PagedSelect(db, meta, query, &projects, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -35,8 +36,7 @@ func GetProjects(db *LoggingDB, meta *PageMeta) ([]*Project, *PagedResultMeta, e
 
 func GetProject(db *LoggingDB, projectID uuid.UUID) (*Project, error) {
 	query := `
-	select *
-	from projects
+	select * from projects
 	where project_id = $1
 	`
 

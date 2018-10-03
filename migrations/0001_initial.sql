@@ -49,6 +49,8 @@ create table build_logs (
 );
 
 -- +migrate Down
+alter table projects drop column last_build_id;
+
 drop table build_logs;
 drop table builds;
 drop table projects;
