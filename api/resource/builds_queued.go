@@ -24,7 +24,12 @@ func (r *QueuedBuildsResource) Get(ctx context.Context, req *http.Request, logge
 		return resp
 	}
 
-	builds, pagedResultsMeta, err := db.GetQueuedBuilds(r.DB, pageMeta)
+	builds, pagedResultsMeta, err := db.GetQueuedBuilds(
+		r.DB,
+		pageMeta,
+		req.URL.Query().Get("filter"),
+	)
+
 	if err != nil {
 		return util.InternalError(
 			logger,

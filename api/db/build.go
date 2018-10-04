@@ -67,7 +67,7 @@ func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProjec
 	return builds, pageResults, nil
 }
 
-func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetQueuedBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
 		b.*,
@@ -79,12 +79,12 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 		p.last_build_completed_at "project.last_build_completed_at"
 	from builds b
 	join projects p on b.project_id = p.project_id
-	where build_status = 'queued'
+	where build_status = 'queued' and ($1 = '' or (b.tsv @@ plainto_tsquery($1)))
 	order by created_at desc
 	`
 
 	builds := []*BuildWithProject{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds)
+	pagedResults, err := PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,7 +92,7 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 	return builds, pagedResults, nil
 }
 
-func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetActiveBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
 	query := `
 	select
 		b.*,
@@ -104,12 +104,12 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 		p.last_build_completed_at "project.last_build_completed_at"
 	from builds b
 	join projects p on b.project_id = p.project_id
-	where build_status = 'in-progress'
+	where build_status = 'in-progress' and ($1 = '' or (b.tsv @@ plainto_tsquery($1)))
 	order by created_at desc
 	`
 
 	builds := []*BuildWithProject{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds)
+	pagedResults, err := PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
