@@ -21,7 +21,7 @@ type Project struct {
 func GetProjects(db *LoggingDB, meta *PageMeta, filter string) ([]*Project, *PagedResultMeta, error) {
 	query := `
 	select * from projects
-	where $1 = '' or (tsv @@ to_tsquery($1))
+	where $1 = '' or (tsv @@ plainto_tsquery($1))
 	order by last_build_completed_at desc, project_id
 	`
 

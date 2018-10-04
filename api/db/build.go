@@ -54,7 +54,7 @@ func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProjec
 		p.last_build_completed_at "project.last_build_completed_at"
 	from builds b
 	join projects p on b.project_id = p.project_id
-	where $1 = '' or (b.tsv @@ to_tsquery($1))
+	where $1 = '' or (b.tsv @@ plainto_tsquery($1))
 	order by created_at desc
 	`
 
@@ -120,7 +120,7 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta) ([]*BuildWithProject, *Paged
 func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta, filter string) ([]*Build, *PagedResultMeta, error) {
 	query := `
 	select * from builds
-	where project_id = $1 and ($2 = '' or (tsv @@ to_tsquery($2)))
+	where project_id = $1 and ($2 = '' or (tsv @@ plainto_tsquery("$2")))
 	order by created_at desc
 	`
 
