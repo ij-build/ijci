@@ -1,13 +1,6 @@
-# Build Logs
 .ij
-
-# Build Artifacts
-vendor
-
-# Binaries
 ijci-api
 ijci-agent
 ijci-migrate
-
-# Local Data
 repos
+vendor
