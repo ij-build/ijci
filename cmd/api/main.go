@@ -8,18 +8,12 @@ import (
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/api/db"
 	"github.com/efritz/ijci/api/resource"
-	"github.com/efritz/ijci/api/s3"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
 	processes.RegisterInitializer(
 		db.NewInitializer(),
 		nacelle.WithInitializerName("db"),
-	)
-
-	processes.RegisterInitializer(
-		s3.NewInitializer(),
-		nacelle.WithInitializerName("s3"),
 	)
 
 	processes.RegisterInitializer(

@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/api/util"
 )
 
@@ -22,7 +21,6 @@ type (
 	BuildLogResource struct {
 		*chevron.EmptySpec
 		DB *db.LoggingDB `service:"db"`
-		S3 s3.Client     `service:"s3"`
 	}
 
 	jsonBuildLogPatchPayload struct {
@@ -31,7 +29,7 @@ type (
 )
 
 func (r *BuildLogResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	for _, f := range []chevron.Handler{r.getContentFromS3, r.getContentFromAgent, r.getContentFromS3} {
+	for _, f := range []chevron.Handler{r.getContentFromDB, r.getContentFromAgent, r.getContentFromDB} {
 		if resp := f(ctx, req, logger); resp != nil {
 			return resp
 		}
@@ -55,17 +53,8 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 	}
 
 	now := time.Now()
-	key := buildLog.BuildLogID.String()
-
-	buildLog.Key = &key
 	buildLog.UploadedAt = &now
-
-	if err := r.S3.Upload(ctx, key, payload.Content); err != nil {
-		return util.InternalError(
-			logger,
-			fmt.Errorf("failed to upload log file (%s)", err.Error()),
-		)
-	}
+	buildLog.Content = &payload.Content
 
 	if err := db.UpdateBuildLog(r.DB, logger, buildLog); err != nil {
 		return util.InternalError(
@@ -79,27 +68,17 @@ func (r *BuildLogResource) Patch(ctx context.Context, req *http.Request, logger 
 	}).SetStatusCode(http.StatusCreated)
 }
 
-func (r *BuildLogResource) getContentFromS3(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
+func (r *BuildLogResource) getContentFromDB(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
 	buildLog, resp := util.GetBuildLog(r.DB, logger, req)
 	if resp != nil {
 		return resp
 	}
 
-	if buildLog.Key == nil {
+	if buildLog.Content == nil {
 		return nil
 	}
 
-	logger.Info("Serving build log from S3")
-
-	content, err := r.S3.Download(ctx, *buildLog.Key)
-	if err != nil {
-		return util.InternalError(
-			logger,
-			fmt.Errorf("failed to fetch build log content from S3 (%s)", err.Error()),
-		)
-	}
-
-	return response.Respond([]byte(content))
+	return response.Respond([]byte(*buildLog.Content))
 }
 
 func (r *BuildLogResource) getContentFromAgent(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {

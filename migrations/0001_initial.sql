@@ -43,9 +43,9 @@ create table build_logs (
     build_log_id uuid primary key,
     build_id uuid not null references builds on delete cascade,
     name text not null,
-    key text,
     created_at timestamp with time zone not null,
-    uploaded_at timestamp with time zone
+    uploaded_at timestamp with time zone,
+    content text
 );
 
 -- +migrate Down

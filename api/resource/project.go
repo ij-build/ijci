@@ -12,7 +12,6 @@ import (
 	"github.com/efritz/response"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/api/util"
 )
 
@@ -20,7 +19,6 @@ type (
 	ProjectResource struct {
 		*chevron.EmptySpec
 		DB *db.LoggingDB `service:"db"`
-		S3 s3.Client     `service:"s3"`
 	}
 
 	jsonProjectPatchPayload struct {
@@ -73,10 +71,6 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 }
 
 func (r *ProjectResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
-	if err := util.DeleteBuildLogFilesForProject(ctx, r.DB, r.S3, util.GetProjectID(req)); err != nil {
-		return util.InternalError(logger, err)
-	}
-
 	if err := db.DeleteProject(r.DB, logger, util.GetProjectID(req)); err != nil {
 		if err == db.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)

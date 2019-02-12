@@ -12,9 +12,9 @@ type BuildLog struct {
 	BuildLogID uuid.UUID  `db:"build_log_id" json:"build_log_id"`
 	BuildID    uuid.UUID  `db:"build_id" json:"build_id"`
 	Name       string     `db:"name" json:"name"`
-	Key        *string    `db:"key" json:"key"`
 	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
 	UploadedAt *time.Time `db:"uploaded_at" json:"uploaded_at"`
+	Content    *string    `db:"content"` // TODO - carreful when this is fetched
 }
 
 func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
@@ -26,22 +26,6 @@ func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 
 	buildLogs := []*BuildLog{}
 	if err := sqlx.Select(db, &buildLogs, query, buildID); err != nil {
-		return nil, handlePostgresError(err, "select error")
-	}
-
-	return buildLogs, nil
-}
-
-func GetBuildLogsForProject(db *LoggingDB, projectID uuid.UUID) ([]*BuildLog, error) {
-	query := `
-	select l.*
-	from build_logs l
-	join builds b on l.build_id = b.build_id
-	where project_id = $1
-	`
-
-	buildLogs := []*BuildLog{}
-	if err := sqlx.Select(db, &buildLogs, query, projectID); err != nil {
 		return nil, handlePostgresError(err, "select error")
 	}
 
@@ -96,16 +80,16 @@ func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	query := `
 	update build_logs
 	set
-		key = $1,
-		uploaded_at = $2
+		uploaded_at = $1,
+		content = $2
 	where
 		build_log_id = $3
 	`
 
 	if _, err := db.Exec(
 		query,
-		l.Key,
 		l.UploadedAt,
+		l.Content,
 		l.BuildLogID,
 	); err != nil {
 		return handlePostgresError(err, "update error")

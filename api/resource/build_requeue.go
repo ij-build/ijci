@@ -12,14 +12,12 @@ import (
 
 	"github.com/efritz/ijci/amqp/client"
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/api/util"
 )
 
 type BuildRequeueResource struct {
 	*chevron.EmptySpec
 	DB       *db.LoggingDB        `service:"db"`
-	S3       s3.Client            `service:"s3"`
 	Producer *amqpclient.Producer `service:"amqp-producer"`
 }
 
@@ -27,10 +25,6 @@ func (r *BuildRequeueResource) Post(ctx context.Context, req *http.Request, logg
 	build, resp := util.GetBuild(r.DB, logger, req)
 	if resp != nil {
 		return resp
-	}
-
-	if err := util.DeleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
-		return util.InternalError(logger, err)
 	}
 
 	if err := db.DeleteBuildLogsForBuild(r.DB, logger, build.BuildID); err != nil {

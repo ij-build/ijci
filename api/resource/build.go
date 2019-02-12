@@ -13,7 +13,6 @@ import (
 	"github.com/efritz/response"
 
 	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/s3"
 	"github.com/efritz/ijci/api/util"
 )
 
@@ -21,7 +20,6 @@ type (
 	BuildResource struct {
 		*chevron.EmptySpec
 		DB *db.LoggingDB `service:"db"`
-		S3 s3.Client     `service:"s3"`
 	}
 
 	jsonBuildPatchPayload struct {
@@ -123,10 +121,6 @@ func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger na
 
 	if !util.IsTerminal(build.BuildStatus) {
 		return response.Empty(http.StatusConflict)
-	}
-
-	if err := util.DeleteBuildLogFilesForBuild(ctx, r.DB, r.S3, build.BuildID); err != nil {
-		return util.InternalError(logger, err)
 	}
 
 	if err := db.DeleteBuild(r.DB, logger, build.Build); err != nil {
