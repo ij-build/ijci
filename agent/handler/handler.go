@@ -188,15 +188,15 @@ func (h *handler) runDefaultPlan(
 	}
 
 	appOptions := &options.AppOptions{
-		ProjectDir:  directory,
-		ScratchRoot: h.scratchRoot,
-		Colorize:    false,
-		ConfigPath:  "",
-		Env:         nil,
-		EnvFiles:    nil,
-		Quiet:       true,
-		Verbose:     true,
-		FileFactory: fileFactory,
+		ProjectDir:   directory,
+		ScratchRoot:  h.scratchRoot,
+		DisableColor: true,
+		ConfigPath:   "",
+		Env:          nil,
+		EnvFiles:     nil,
+		Quiet:        true,
+		Verbose:      true,
+		FileFactory:  fileFactory,
 	}
 
 	runOptions := &options.RunOptions{
