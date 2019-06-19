@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   api:
     build:
@@ -9,7 +9,7 @@ services:
       - LOG_FIELD_BLACKLIST=caller,sequence_number
       - LOG_LEVEL=debug
       - LOG_SQL_QUERIES=true
-      - POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
+      - DATABASE_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
       - AMQP_EXCHANGE=ijci
       - AMQP_ROUTING_KEY=key
       - AMQP_URI=amqp://guest:guest@rabbitmq:5672/
@@ -39,7 +39,6 @@ services:
       - api
       - rabbitmq
     volumes:
-      - ./repos:/repos
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
 
@@ -48,7 +47,7 @@ services:
       context: .
       dockerfile: Dockerfile.migrate
     environment:
-      - IJCI_POSTGRES_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
+      - IJCI_DATABASE_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
     depends_on:
       - postgres
 
