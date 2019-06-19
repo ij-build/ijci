@@ -1,6 +1,5 @@
 environment:
-  - IMPORT_PATH=github.com/ij-build/ijci
-  - WORKSPACE=/go/src/${IMPORT_PATH}
+  - WORKSPACE=/ijci
   - GO_IMAGE=golang:1.12
   - SKIP_MIGRATE=
 
@@ -22,15 +21,15 @@ tasks:
     script: |
       if [ ! -d vendor ]; then
         echo "Installing vendors"
-        go get -u github.com/golang/dep/cmd/dep
-        dep ensure
+        go get -u ./...
+        go mod vendor
       fi
 
   go-build:
     image: ${GO_IMAGE}
     script: |
       echo "Building ${APP_NAME} binary"
-      go build -o ijci-${APP_NAME} ./cmd/${APP_NAME}
+      go build -mod vendor -o ijci-${APP_NAME} ./cmd/${APP_NAME}
     environment:
       - GOOS=linux
       - GOARCH=amd64
@@ -49,6 +48,7 @@ plans:
         tasks:
           - install-vendors
       - name: build
+        parallel: true
         tasks:
           - name: go-build
             environment: APP_NAME=api
@@ -57,11 +57,11 @@ plans:
           - name: go-build
             environment: APP_NAME=migrate
             disabled: ${SKIP_MIGRATE}
-        parallel: true
 
   build-images:
     stages:
       - name: build images
+        parallel: true
         tasks:
           - name: build-image
             environment: APP_NAME=api
@@ -69,7 +69,6 @@ plans:
             environment: APP_NAME=agent
           - name: build-image
             environment: APP_NAME=migrate
-        parallel: true
 
 metaplans:
   default:
