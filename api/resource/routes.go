@@ -31,6 +31,7 @@ func SetupRoutes(config nacelle.Config, router chevron.Router) error {
 	register("/builds/{build_id:<id>}/requeue", &BuildRequeueResource{})
 	register("/builds/{build_id:<id>}/logs", &BuildLogsResource{}, makePostSchema("build-log"))
 	register("/builds/{build_id:<id>}/logs/{build_log_id:<id>}", &BuildLogResource{}, makePatchSchema("build-log"))
+	register("/sse", &SSEResource{})
 	return nil
 }
 

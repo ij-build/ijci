@@ -11,6 +11,11 @@ import (
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
+	monitor := db.NewMonitor()
+	if err := services.Set("monitor", monitor); err != nil {
+		return err
+	}
+
 	processes.RegisterInitializer(
 		pgutil.NewInitializer(),
 		nacelle.WithInitializerName("db"),
@@ -19,6 +24,11 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 	processes.RegisterInitializer(
 		amqpclient.NewProducerInitializer(),
 		nacelle.WithInitializerName("amqp-producer"),
+	)
+
+	processes.RegisterProcess(
+		monitor,
+		nacelle.WithProcessName("monitor"),
 	)
 
 	processes.RegisterProcess(
