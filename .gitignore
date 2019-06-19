@@ -1,6 +1,8 @@
 .ij
+.vscode
+vendor
+
 ijci-api
 ijci-agent
 ijci-migrate
 repos
-vendor
