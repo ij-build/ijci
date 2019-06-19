@@ -5,7 +5,7 @@ import (
 )
 
 type ProducerInitializer struct {
-	Logger    nacelle.Logger           `service:"logger"`
+	Logger   nacelle.Logger           `service:"logger"`
 	Services nacelle.ServiceContainer `service:"services"`
 }
 
