@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/efritz/chevron"
-	"github.com/efritz/chevron/middleware"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/chevron"
+	"github.com/go-nacelle/chevron/middleware"
+	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
 
-	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/util"
+	"github.com/ij-build/ijci/api/db"
+	"github.com/ij-build/ijci/api/util"
 )
 
 type (

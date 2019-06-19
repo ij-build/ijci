@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/efritz/chevron"
-	"github.com/efritz/nacelle"
-	basehttp "github.com/efritz/nacelle/base/http"
+	"github.com/go-nacelle/chevron"
+	"github.com/go-nacelle/nacelle"
+	 "github.com/go-nacelle/httpbase"
 
-	"github.com/efritz/ijci/amqp/client"
-	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/ijci/api/resource"
+	"github.com/ij-build/ijci/amqp/client"
+	"github.com/ij-build/ijci/api/db"
+	"github.com/ij-build/ijci/api/resource"
 )
 
 func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer) error {
@@ -22,7 +22,7 @@ func setup(processes nacelle.ProcessContainer, services nacelle.ServiceContainer
 	)
 
 	processes.RegisterProcess(
-		basehttp.NewServer(chevron.NewInitializer(resource.SetupRoutesFunc)),
+		httpbase.NewServer(chevron.NewInitializer(resource.SetupRoutesFunc)),
 		nacelle.WithProcessName("server"),
 	)
 

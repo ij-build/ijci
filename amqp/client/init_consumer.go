@@ -3,7 +3,7 @@ package amqpclient
 import (
 	"fmt"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 )
 
 type ConsumerInitializer struct {

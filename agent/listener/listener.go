@@ -1,13 +1,13 @@
 package listener
 
 import (
-	"github.com/efritz/ij/subcommand"
-	"github.com/efritz/nacelle"
+	"github.com/ij-build/ij/subcommand"
+	"github.com/go-nacelle/nacelle"
 
-	"github.com/efritz/ijci/agent/api"
-	"github.com/efritz/ijci/agent/handler"
-	"github.com/efritz/ijci/amqp/client"
-	"github.com/efritz/ijci/amqp/message"
+	"github.com/ij-build/ijci/agent/api"
+	"github.com/ij-build/ijci/agent/handler"
+	"github.com/ij-build/ijci/amqp/client"
+	"github.com/ij-build/ijci/amqp/message"
 )
 
 type Listener struct {

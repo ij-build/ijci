@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/efritz/chevron"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/chevron"
+	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
 
-	agentctx "github.com/efritz/ijci/agent/context"
-	"github.com/efritz/ijci/agent/util"
+	agentctx "github.com/ij-build/ijci/agent/context"
+	"github.com/ij-build/ijci/agent/util"
 )
 
 type BuildCancelResource struct {

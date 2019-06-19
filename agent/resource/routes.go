@@ -3,11 +3,11 @@ package resource
 import (
 	"strings"
 
-	"github.com/efritz/chevron"
-	"github.com/efritz/chevron/middleware"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/chevron"
+	"github.com/go-nacelle/chevron/middleware"
+	"github.com/go-nacelle/nacelle"
 
-	"github.com/efritz/ijci/consts"
+	"github.com/ij-build/ijci/consts"
 )
 
 var SetupRoutesFunc = chevron.RouteInitializerFunc(SetupRoutes)

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/rubenv/sql-migrate"
 
-	"github.com/efritz/ijci/api/db"
+	"github.com/ij-build/ijci/api/db"
 )
 
 func main() {

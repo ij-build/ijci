@@ -8,20 +8,20 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/efritz/ij/config"
-	"github.com/efritz/ij/loader"
-	"github.com/efritz/ij/options"
-	"github.com/efritz/ij/subcommand"
-	"github.com/efritz/nacelle"
+	"github.com/ij-build/ij/config"
+	"github.com/ij-build/ij/loader"
+	"github.com/ij-build/ij/options"
+	"github.com/ij-build/ij/subcommand"
+	"github.com/go-nacelle/nacelle"
 	"github.com/google/uuid"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
-	"github.com/efritz/ijci/agent/api"
-	agentctx "github.com/efritz/ijci/agent/context"
-	"github.com/efritz/ijci/agent/log"
-	"github.com/efritz/ijci/amqp/message"
+	"github.com/ij-build/ijci/agent/api"
+	agentctx "github.com/ij-build/ijci/agent/context"
+	"github.com/ij-build/ijci/agent/log"
+	"github.com/ij-build/ijci/amqp/message"
 )
 
 type (

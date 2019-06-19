@@ -3,7 +3,7 @@ package util
 import (
 	"net/http"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
 )
 

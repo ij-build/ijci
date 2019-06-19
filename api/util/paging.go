@@ -8,7 +8,7 @@ import (
 
 	"github.com/efritz/response"
 
-	"github.com/efritz/ijci/api/db"
+	"github.com/ij-build/ijci/api/db"
 )
 
 const (

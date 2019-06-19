@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/google/uuid"
 
-	"github.com/efritz/ijci/agent/api"
+	"github.com/ij-build/ijci/agent/api"
 )
 
 type (

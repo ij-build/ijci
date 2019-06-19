@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )

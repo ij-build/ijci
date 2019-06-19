@@ -1,6 +1,6 @@
 package apiclient
 
-import "github.com/efritz/nacelle"
+import "github.com/go-nacelle/nacelle"
 
 type Initializer struct {
 	Container nacelle.ServiceContainer `service:"container"`

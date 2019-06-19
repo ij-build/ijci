@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/efritz/chevron"
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/chevron"
+	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
 
-	"github.com/efritz/ijci/agent/log"
-	"github.com/efritz/ijci/agent/util"
+	"github.com/ij-build/ijci/agent/log"
+	"github.com/ij-build/ijci/agent/util"
 )
 
 type BuildLogResource struct {

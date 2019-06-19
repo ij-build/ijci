@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 	"github.com/google/uuid"
 )
 

@@ -1,7 +1,7 @@
 package amqpclient
 
 import (
-	"github.com/efritz/nacelle"
+	"github.com/go-nacelle/nacelle"
 )
 
 type ProducerInitializer struct {

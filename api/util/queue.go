@@ -3,9 +3,9 @@ package util
 import (
 	"fmt"
 
-	"github.com/efritz/ijci/amqp/client"
-	"github.com/efritz/ijci/amqp/message"
-	"github.com/efritz/ijci/api/db"
+	"github.com/ij-build/ijci/amqp/client"
+	"github.com/ij-build/ijci/amqp/message"
+	"github.com/ij-build/ijci/api/db"
 )
 
 func QueueBuild(producer *amqpclient.Producer, build *db.BuildWithProject) error {

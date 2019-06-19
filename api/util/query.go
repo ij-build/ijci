@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/efritz/ijci/api/db"
-	"github.com/efritz/nacelle"
+	"github.com/ij-build/ijci/api/db"
+	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
 )
 
