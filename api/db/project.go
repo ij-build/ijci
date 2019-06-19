@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/pgutil"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -18,7 +19,7 @@ type Project struct {
 	TextSearchVector     interface{} `db:"tsv" json:"-"`
 }
 
-func GetProjects(db *LoggingDB, meta *PageMeta, filter string) ([]*Project, *PagedResultMeta, error) {
+func GetProjects(db *pgutil.LoggingDB, meta *pgutil.PageMeta, filter string) ([]*Project, *pgutil.PagedResultMeta, error) {
 	query := `
 	select * from projects
 	where $1 = '' or (tsv @@ plainto_tsquery($1))
@@ -26,7 +27,7 @@ func GetProjects(db *LoggingDB, meta *PageMeta, filter string) ([]*Project, *Pag
 	`
 
 	projects := []*Project{}
-	pageResults, err := PagedSelect(db, meta, query, &projects, filter)
+	pageResults, err := pgutil.PagedSelect(db, meta, query, &projects, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -34,7 +35,7 @@ func GetProjects(db *LoggingDB, meta *PageMeta, filter string) ([]*Project, *Pag
 	return projects, pageResults, nil
 }
 
-func GetProject(db *LoggingDB, projectID uuid.UUID) (*Project, error) {
+func GetProject(db *pgutil.LoggingDB, projectID uuid.UUID) (*Project, error) {
 	query := `
 	select * from projects
 	where project_id = $1
@@ -42,13 +43,13 @@ func GetProject(db *LoggingDB, projectID uuid.UUID) (*Project, error) {
 
 	project := &Project{}
 	if err := sqlx.Get(db, project, query, projectID); err != nil {
-		return nil, handlePostgresError(err, "select error")
+		return nil, pgutil.HandleError(err, "select error")
 	}
 
 	return project, nil
 }
 
-func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL string) (*Project, error) {
+func GetOrCreateProject(db *pgutil.LoggingDB, logger nacelle.Logger, repositoryURL string) (*Project, error) {
 	query := `
 	insert into projects (
 		project_id,
@@ -69,13 +70,13 @@ func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL stri
 
 	var projectID uuid.UUID
 	if err := sqlx.Get(db, &projectID, query, p.ProjectID, p.Name, p.RepositoryURL); err != nil {
-		return nil, handlePostgresError(err, "insert error")
+		return nil, pgutil.HandleError(err, "insert error")
 	}
 
 	if projectID != p.ProjectID {
 		p := &Project{}
 		if err := sqlx.Get(db, p, `select * from projects where project_id = $1`, projectID); err != nil {
-			return nil, handlePostgresError(err, "select error")
+			return nil, pgutil.HandleError(err, "select error")
 		}
 
 		return p, nil
@@ -88,7 +89,7 @@ func GetOrCreateProject(db *LoggingDB, logger nacelle.Logger, repositoryURL stri
 	return p, nil
 }
 
-func CreateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
+func CreateProject(db *pgutil.LoggingDB, logger nacelle.Logger, p *Project) error {
 	query := `
 	insert into projects (
 		project_id,
@@ -105,7 +106,7 @@ func CreateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	)
 
 	if err != nil {
-		return handlePostgresError(err, "insert error")
+		return pgutil.HandleError(err, "insert error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -115,7 +116,7 @@ func CreateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	return nil
 }
 
-func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
+func UpdateProject(db *pgutil.LoggingDB, logger nacelle.Logger, p *Project) error {
 	query := `
 	update projects
 	set
@@ -132,7 +133,7 @@ func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	)
 
 	if err != nil {
-		return handlePostgresError(err, "update error")
+		return pgutil.HandleError(err, "update error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -142,12 +143,12 @@ func UpdateProject(db *LoggingDB, logger nacelle.Logger, p *Project) error {
 	return nil
 }
 
-func DeleteProject(db *LoggingDB, logger nacelle.Logger, projectID uuid.UUID) error {
+func DeleteProject(db *pgutil.LoggingDB, logger nacelle.Logger, projectID uuid.UUID) error {
 	if _, err := db.Exec(
 		`delete from projects where project_id = $1`,
 		projectID,
 	); err != nil {
-		return handlePostgresError(err, "delete error")
+		return pgutil.HandleError(err, "delete error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{

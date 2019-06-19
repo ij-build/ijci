@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/chevron/middleware"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
-
+	"github.com/go-nacelle/pgutil"
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
 )
@@ -19,7 +19,7 @@ import (
 type (
 	BuildResource struct {
 		*chevron.EmptySpec
-		DB *db.LoggingDB `service:"db"`
+		DB *pgutil.LoggingDB `service:"db"`
 	}
 
 	jsonBuildPatchPayload struct {
@@ -124,7 +124,7 @@ func (r *BuildResource) Delete(ctx context.Context, req *http.Request, logger na
 	}
 
 	if err := db.DeleteBuild(r.DB, logger, build.Build); err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)
 		}
 

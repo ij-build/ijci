@@ -6,7 +6,7 @@ import (
 
 type ProducerInitializer struct {
 	Logger    nacelle.Logger           `service:"logger"`
-	Container nacelle.ServiceContainer `service:"container"`
+	Services nacelle.ServiceContainer `service:"services"`
 }
 
 const ServiceNameProducer = "amqp-producer"
@@ -51,7 +51,7 @@ func (pi *ProducerInitializer) Init(config nacelle.Config) error {
 		return err
 	}
 
-	return pi.Container.Set(ServiceNameProducer, NewProducer(
+	return pi.Services.Set(ServiceNameProducer, NewProducer(
 		conn,
 		channel,
 		confirms,

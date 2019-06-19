@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/pgutil"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -17,7 +18,7 @@ type BuildLog struct {
 	Content    *string    `db:"content"` // TODO - carreful when this is fetched
 }
 
-func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
+func GetBuildLogs(db *pgutil.LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 	query := `
 	select * from build_logs
 	where build_id = $1
@@ -26,13 +27,13 @@ func GetBuildLogs(db *LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
 
 	buildLogs := []*BuildLog{}
 	if err := sqlx.Select(db, &buildLogs, query, buildID); err != nil {
-		return nil, handlePostgresError(err, "select error")
+		return nil, pgutil.HandleError(err, "select error")
 	}
 
 	return buildLogs, nil
 }
 
-func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
+func GetBuildLog(db *pgutil.LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error) {
 	query := `
 	select * from build_logs
 	where build_id = $1 and build_log_id = $2
@@ -40,13 +41,13 @@ func GetBuildLog(db *LoggingDB, buildID, buildLogID uuid.UUID) (*BuildLog, error
 
 	buildLog := &BuildLog{}
 	if err := sqlx.Get(db, buildLog, query, buildID, buildLogID); err != nil {
-		return nil, handlePostgresError(err, "select error")
+		return nil, pgutil.HandleError(err, "select error")
 	}
 
 	return buildLog, nil
 }
 
-func CreateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
+func CreateBuildLog(db *pgutil.LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	query := `
 	insert into build_logs (
 		build_log_id,
@@ -65,7 +66,7 @@ func CreateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	)
 
 	if err != nil {
-		return handlePostgresError(err, "insert error")
+		return pgutil.HandleError(err, "insert error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -76,7 +77,7 @@ func CreateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	return nil
 }
 
-func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
+func UpdateBuildLog(db *pgutil.LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	query := `
 	update build_logs
 	set
@@ -92,7 +93,7 @@ func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 		l.Content,
 		l.BuildLogID,
 	); err != nil {
-		return handlePostgresError(err, "update error")
+		return pgutil.HandleError(err, "update error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -103,12 +104,12 @@ func UpdateBuildLog(db *LoggingDB, logger nacelle.Logger, l *BuildLog) error {
 	return nil
 }
 
-func DeleteBuildLogsForBuild(db *LoggingDB, logger nacelle.Logger, buildID uuid.UUID) error {
+func DeleteBuildLogsForBuild(db *pgutil.LoggingDB, logger nacelle.Logger, buildID uuid.UUID) error {
 	if _, err := db.Exec(
 		`delete from build_logs where build_id = $1`,
 		buildID,
 	); err != nil {
-		return handlePostgresError(err, "delete error")
+		return pgutil.HandleError(err, "delete error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{

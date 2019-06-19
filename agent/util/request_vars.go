@@ -3,8 +3,8 @@ package util
 import (
 	"net/http"
 
-	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
+	"github.com/go-nacelle/nacelle"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )

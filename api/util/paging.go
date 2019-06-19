@@ -7,8 +7,7 @@ import (
 	"strconv"
 
 	"github.com/efritz/response"
-
-	"github.com/ij-build/ijci/api/db"
+	"github.com/go-nacelle/pgutil"
 )
 
 const (
@@ -16,7 +15,7 @@ const (
 	DefaultPageSize = 5
 )
 
-func GetPageMeta(req *http.Request) (*db.PageMeta, response.Response) {
+func GetPageMeta(req *http.Request) (*pgutil.PageMeta, response.Response) {
 	page, ok := getPage(req.URL.Query())
 	if !ok {
 		return nil, response.Empty(http.StatusBadRequest)
@@ -27,7 +26,7 @@ func GetPageMeta(req *http.Request) (*db.PageMeta, response.Response) {
 		return nil, response.Empty(http.StatusBadRequest)
 	}
 
-	return &db.PageMeta{
+	return &pgutil.PageMeta{
 		Page:     page,
 		PageSize: pageSize,
 	}, nil

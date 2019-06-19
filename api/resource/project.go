@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/chevron/middleware"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
-
+	"github.com/go-nacelle/pgutil"
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
 )
@@ -18,7 +18,7 @@ import (
 type (
 	ProjectResource struct {
 		*chevron.EmptySpec
-		DB *db.LoggingDB `service:"db"`
+		DB *pgutil.LoggingDB `service:"db"`
 	}
 
 	jsonProjectPatchPayload struct {
@@ -72,7 +72,7 @@ func (r *ProjectResource) Patch(ctx context.Context, req *http.Request, logger n
 
 func (r *ProjectResource) Delete(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {
 	if err := db.DeleteProject(r.DB, logger, util.GetProjectID(req)); err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)
 		}
 

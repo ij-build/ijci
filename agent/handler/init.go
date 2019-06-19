@@ -3,7 +3,7 @@ package handler
 import "github.com/go-nacelle/nacelle"
 
 type Initializer struct {
-	Container nacelle.ServiceContainer `service:"container"`
+	Services nacelle.ServiceContainer `service:"services"`
 }
 
 const ServiceName = "handler"
@@ -19,9 +19,9 @@ func (i *Initializer) Init(config nacelle.Config) error {
 	}
 
 	handler := NewHandler(handlerConfig.ScratchRoot)
-	if err := i.Container.Inject(handler); err != nil {
+	if err := i.Services.Inject(handler); err != nil {
 		return err
 	}
 
-	return i.Container.Set(ServiceName, handler)
+	return i.Services.Set(ServiceName, handler)
 }

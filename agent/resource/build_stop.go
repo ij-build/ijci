@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
 
 	agentctx "github.com/ij-build/ijci/agent/context"
 	"github.com/ij-build/ijci/agent/util"

@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/chevron/middleware"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
+	"github.com/go-nacelle/pgutil"
 	"github.com/google/uuid"
-
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
 )
@@ -20,7 +20,7 @@ import (
 type (
 	BuildLogResource struct {
 		*chevron.EmptySpec
-		DB *db.LoggingDB `service:"db"`
+		DB *pgutil.LoggingDB `service:"db"`
 	}
 
 	jsonBuildLogPatchPayload struct {

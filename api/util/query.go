@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ij-build/ijci/api/db"
-	"github.com/go-nacelle/nacelle"
 	"github.com/efritz/response"
+	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/pgutil"
+	"github.com/ij-build/ijci/api/db"
 )
 
-func GetProject(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.Project, response.Response) {
+func GetProject(loggingDB *pgutil.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.Project, response.Response) {
 	build, err := db.GetProject(loggingDB, GetProjectID(req))
 	if err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return nil, response.Empty(http.StatusNotFound)
 		}
 
@@ -25,10 +26,10 @@ func GetProject(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Reques
 	return build, nil
 }
 
-func GetBuild(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.BuildWithProject, response.Response) {
+func GetBuild(loggingDB *pgutil.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.BuildWithProject, response.Response) {
 	build, err := db.GetBuild(loggingDB, GetBuildID(req))
 	if err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return nil, response.Empty(http.StatusNotFound)
 		}
 
@@ -41,10 +42,10 @@ func GetBuild(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Request)
 	return build, nil
 }
 
-func GetBuildLog(loggingDB *db.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.BuildLog, response.Response) {
+func GetBuildLog(loggingDB *pgutil.LoggingDB, logger nacelle.Logger, req *http.Request) (*db.BuildLog, response.Response) {
 	buildLog, err := db.GetBuildLog(loggingDB, GetBuildID(req), GetBuildLogID(req))
 	if err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return nil, response.Empty(http.StatusNotFound)
 		}
 

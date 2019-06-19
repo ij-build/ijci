@@ -7,7 +7,6 @@ import (
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/chevron/middleware"
 	"github.com/go-nacelle/nacelle"
-
 	"github.com/ij-build/ijci/consts"
 )
 

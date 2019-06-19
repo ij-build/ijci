@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/go-nacelle/chevron"
-	"github.com/go-nacelle/nacelle"
 	"github.com/go-nacelle/httpbase"
+	"github.com/go-nacelle/nacelle"
 
 	"github.com/ij-build/ijci/agent/api"
 	"github.com/ij-build/ijci/agent/context"

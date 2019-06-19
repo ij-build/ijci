@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
-
+	"github.com/go-nacelle/pgutil"
 	"github.com/ij-build/ijci/amqp/client"
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
@@ -17,7 +17,7 @@ import (
 
 type BuildRequeueResource struct {
 	*chevron.EmptySpec
-	DB       *db.LoggingDB        `service:"db"`
+	DB       *pgutil.LoggingDB    `service:"db"`
 	Producer *amqpclient.Producer `service:"amqp-producer"`
 }
 

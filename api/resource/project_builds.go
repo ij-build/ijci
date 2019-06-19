@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
-
+	"github.com/go-nacelle/pgutil"
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
 )
 
 type ProjectBuildsResource struct {
 	*chevron.EmptySpec
-	DB *db.LoggingDB `service:"db"`
+	DB *pgutil.LoggingDB `service:"db"`
 }
 
 func (r *ProjectBuildsResource) Get(ctx context.Context, req *http.Request, logger nacelle.Logger) response.Response {

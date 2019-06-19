@@ -5,13 +5,12 @@ import (
 	"os"
 
 	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/pgutil"
 	"github.com/rubenv/sql-migrate"
-
-	"github.com/ij-build/ijci/api/db"
 )
 
 func main() {
-	db, err := db.Dial(os.Getenv("IJCI_POSTGRES_URL"), nacelle.NewNilLogger())
+	db, err := pgutil.Dial(os.Getenv("IJCI_DATABASE_URL"), nacelle.NewNilLogger())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
 		os.Exit(1)

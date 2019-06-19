@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/go-nacelle/nacelle"
+	"github.com/go-nacelle/pgutil"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -42,7 +43,7 @@ type (
 	}
 )
 
-func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetBuilds(db *pgutil.LoggingDB, meta *pgutil.PageMeta, filter string) ([]*BuildWithProject, *pgutil.PagedResultMeta, error) {
 	query := `
 	select
 		b.*,
@@ -59,7 +60,7 @@ func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProjec
 	`
 
 	builds := []*BuildWithProject{}
-	pageResults, err := PagedSelect(db, meta, query, &builds, filter)
+	pageResults, err := pgutil.PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -67,7 +68,7 @@ func GetBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProjec
 	return builds, pageResults, nil
 }
 
-func GetQueuedBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetQueuedBuilds(db *pgutil.LoggingDB, meta *pgutil.PageMeta, filter string) ([]*BuildWithProject, *pgutil.PagedResultMeta, error) {
 	query := `
 	select
 		b.*,
@@ -84,7 +85,7 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWith
 	`
 
 	builds := []*BuildWithProject{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds, filter)
+	pagedResults, err := pgutil.PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,7 +93,7 @@ func GetQueuedBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWith
 	return builds, pagedResults, nil
 }
 
-func GetActiveBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWithProject, *PagedResultMeta, error) {
+func GetActiveBuilds(db *pgutil.LoggingDB, meta *pgutil.PageMeta, filter string) ([]*BuildWithProject, *pgutil.PagedResultMeta, error) {
 	query := `
 	select
 		b.*,
@@ -109,7 +110,7 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWith
 	`
 
 	builds := []*BuildWithProject{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds, filter)
+	pagedResults, err := pgutil.PagedSelect(db, meta, query, &builds, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -117,7 +118,7 @@ func GetActiveBuilds(db *LoggingDB, meta *PageMeta, filter string) ([]*BuildWith
 	return builds, pagedResults, nil
 }
 
-func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta, filter string) ([]*Build, *PagedResultMeta, error) {
+func GetBuildsForProject(db *pgutil.LoggingDB, projectID uuid.UUID, meta *pgutil.PageMeta, filter string) ([]*Build, *pgutil.PagedResultMeta, error) {
 	query := `
 	select * from builds
 	where project_id = $1 and ($2 = '' or (tsv @@ plainto_tsquery($2)))
@@ -125,7 +126,7 @@ func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta, fil
 	`
 
 	builds := []*Build{}
-	pagedResults, err := PagedSelect(db, meta, query, &builds, projectID, filter)
+	pagedResults, err := pgutil.PagedSelect(db, meta, query, &builds, projectID, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -133,7 +134,7 @@ func GetBuildsForProject(db *LoggingDB, projectID uuid.UUID, meta *PageMeta, fil
 	return builds, pagedResults, nil
 }
 
-func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
+func GetBuild(db *pgutil.LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
 	query := `
 	select
 		b.*,
@@ -150,13 +151,13 @@ func GetBuild(db *LoggingDB, buildID uuid.UUID) (*BuildWithProject, error) {
 
 	b := &BuildWithProject{}
 	if err := sqlx.Get(db, b, query, buildID); err != nil {
-		return nil, handlePostgresError(err, "select error")
+		return nil, pgutil.HandleError(err, "select error")
 	}
 
 	return b, nil
 }
 
-func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) error {
+func CreateBuild(db *pgutil.LoggingDB, logger nacelle.Logger, b *BuildWithProject) error {
 	query := `
 	insert into builds (
 		build_id,
@@ -177,7 +178,7 @@ func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) erro
 	)
 
 	if err != nil {
-		return handlePostgresError(err, "insert error")
+		return pgutil.HandleError(err, "insert error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -187,7 +188,7 @@ func CreateBuild(db *LoggingDB, logger nacelle.Logger, b *BuildWithProject) erro
 	return nil
 }
 
-func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
+func UpdateBuild(db *pgutil.LoggingDB, logger nacelle.Logger, b *Build) error {
 	tx, err := db.Beginx()
 	if err != nil {
 		return err
@@ -234,18 +235,18 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		b.CompletedAt,
 		b.BuildID,
 	); err != nil {
-		return handlePostgresError(err, "update error")
+		return pgutil.HandleError(err, "update error")
 	}
 
 	if _, err := tx.Exec(
 		`select update_last_build($1, null)`,
 		b.ProjectID,
 	); err != nil {
-		return handlePostgresError(err, "update error")
+		return pgutil.HandleError(err, "update error")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return handlePostgresError(err, "commit error")
+		return pgutil.HandleError(err, "commit error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{
@@ -255,7 +256,7 @@ func UpdateBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 	return nil
 }
 
-func DeleteBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
+func DeleteBuild(db *pgutil.LoggingDB, logger nacelle.Logger, b *Build) error {
 	tx, err := db.Beginx()
 	if err != nil {
 		return err
@@ -266,18 +267,18 @@ func DeleteBuild(db *LoggingDB, logger nacelle.Logger, b *Build) error {
 		b.ProjectID,
 		b.BuildID,
 	); err != nil {
-		return handlePostgresError(err, "delete error")
+		return pgutil.HandleError(err, "delete error")
 	}
 
 	if _, err := tx.Exec(
 		`delete from builds where build_id = $1`,
 		b.BuildID,
 	); err != nil {
-		return handlePostgresError(err, "delete error")
+		return pgutil.HandleError(err, "delete error")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return handlePostgresError(err, "commit error")
+		return pgutil.HandleError(err, "commit error")
 	}
 
 	logger.InfoWithFields(nacelle.LogFields{

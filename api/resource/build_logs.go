@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/efritz/response"
 	"github.com/go-nacelle/chevron"
 	"github.com/go-nacelle/chevron/middleware"
 	"github.com/go-nacelle/nacelle"
-	"github.com/efritz/response"
+	"github.com/go-nacelle/pgutil"
 	"github.com/google/uuid"
-
 	"github.com/ij-build/ijci/api/db"
 	"github.com/ij-build/ijci/api/util"
 )
@@ -20,7 +20,7 @@ import (
 type (
 	BuildLogsResource struct {
 		*chevron.EmptySpec
-		DB *db.LoggingDB `service:"db"`
+		DB *pgutil.LoggingDB `service:"db"`
 	}
 
 	jsonBuildLogPostPayload struct {
@@ -40,7 +40,7 @@ func (r *BuildLogsResource) Post(ctx context.Context, req *http.Request, logger 
 
 	build, err := db.GetBuild(r.DB, util.GetBuildID(req))
 	if err != nil {
-		if err == db.ErrDoesNotExist {
+		if err == pgutil.ErrDoesNotExist {
 			return response.Empty(http.StatusNotFound)
 		}
 

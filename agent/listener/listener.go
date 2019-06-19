@@ -1,8 +1,8 @@
 package listener
 
 import (
-	"github.com/ij-build/ij/subcommand"
 	"github.com/go-nacelle/nacelle"
+	"github.com/ij-build/ij/subcommand"
 
 	"github.com/ij-build/ijci/agent/api"
 	"github.com/ij-build/ijci/agent/handler"

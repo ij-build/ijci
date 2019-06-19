@@ -3,7 +3,7 @@ package apiclient
 import "github.com/go-nacelle/nacelle"
 
 type Initializer struct {
-	Container nacelle.ServiceContainer `service:"container"`
+	Services nacelle.ServiceContainer `service:"services"`
 }
 
 const ServiceName = "api"
@@ -23,9 +23,9 @@ func (i *Initializer) Init(config nacelle.Config) error {
 		apiConfig.PublicAddr,
 	)
 
-	if err := i.Container.Inject(client); err != nil {
+	if err := i.Services.Inject(client); err != nil {
 		return err
 	}
 
-	return i.Container.Set(ServiceName, client)
+	return i.Services.Set(ServiceName, client)
 }

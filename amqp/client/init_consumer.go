@@ -8,7 +8,7 @@ import (
 
 type ConsumerInitializer struct {
 	Logger    nacelle.Logger           `service:"logger"`
-	Container nacelle.ServiceContainer `service:"container"`
+	Services nacelle.ServiceContainer `service:"services"`
 }
 
 const ServiceNameConsumer = "amqp-consumer"
@@ -73,7 +73,7 @@ func (ci *ConsumerInitializer) Init(config nacelle.Config) error {
 		return fmt.Errorf("failed to get deliveries from queue (%s)", err.Error())
 	}
 
-	return ci.Container.Set(ServiceNameConsumer, NewConsumer(
+	return ci.Services.Set(ServiceNameConsumer, NewConsumer(
 		conn,
 		channel,
 		consumerTag,
