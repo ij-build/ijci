@@ -4,3 +4,4 @@ EXPOSE 5000
 CMD ["./ijci-api"]
 COPY ijci-api /
 COPY schemas /schemas
+COPY migrations /migrations

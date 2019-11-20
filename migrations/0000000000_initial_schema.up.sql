@@ -1,4 +1,5 @@
--- +migrate Up
+begin;
+
 create type build_status as enum (
     'queued',
     'in-progress',
@@ -48,10 +49,4 @@ create table build_logs (
     content text
 );
 
--- +migrate Down
-alter table projects drop column last_build_id;
-
-drop table build_logs;
-drop table builds;
-drop table projects;
-drop type build_status;
+commit;

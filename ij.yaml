@@ -1,7 +1,6 @@
 environment:
   - WORKSPACE=/ijci
   - GO_IMAGE=golang:1.12
-  - SKIP_MIGRATE=
 
 workspace: ${WORKSPACE}
 
@@ -54,9 +53,6 @@ plans:
             environment: APP_NAME=api
           - name: go-build
             environment: APP_NAME=agent
-          - name: go-build
-            environment: APP_NAME=migrate
-            disabled: ${SKIP_MIGRATE}
 
   build-images:
     stages:
@@ -67,8 +63,6 @@ plans:
             environment: APP_NAME=api
           - name: build-image
             environment: APP_NAME=agent
-          - name: build-image
-            environment: APP_NAME=migrate
 
 metaplans:
   default:

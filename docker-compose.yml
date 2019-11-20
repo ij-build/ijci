@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile.api
     environment:
       - LOG_SHORT_TIME=true
-      - LOG_FIELD_BLACKLIST=caller,sequence_number
+      - 'LOG_FIELD_BLACKLIST=["caller", "sequence_number"]'
       - LOG_LEVEL=debug
       - LOG_SQL_QUERIES=true
       - DATABASE_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
@@ -16,7 +16,6 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-      - migrate
     ports:
       - 5000:5000
 
@@ -26,7 +25,7 @@ services:
       dockerfile: Dockerfile.agent
     environment:
       - LOG_SHORT_TIME=true
-      - LOG_FIELD_BLACKLIST=caller,sequence_number
+      - 'LOG_FIELD_BLACKLIST=["caller", "sequence_number"]'
       - LOG_LEVEL=debug
       - API_ADDR=http://api:5000
       - PUBLIC_HOST=agent
@@ -41,15 +40,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
-
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile.migrate
-    environment:
-      - IJCI_DATABASE_URL=postgres://ijci:ijci@postgres/ijci?sslmode=disable
-    depends_on:
-      - postgres
 
   # External Services
 

@@ -1,6 +1,5 @@
--- +migrate Up
+begin;
 
--- +migrate StatementBegin
 create function update_last_build(uuid, uuid) returns void as $$
 begin
     update projects p
@@ -25,7 +24,5 @@ begin
     where p.project_id = $1;
 end;
 $$ language plpgsql;
--- +migrate StatementEnd
 
--- +migrate Down
-drop function update_last_build(uuid, uuid);
+commit;
