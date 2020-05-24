@@ -25,6 +25,7 @@ func (r *SSEResource) PostInject() error {
 		defer r.Monitor.Unsubscribe(id)
 
 		for event := range events {
+			// TODO - map these values (need to fetch build logs after update - try to do this upstream if possible)
 			// TODO - add filter in sse package
 			ch <- event
 		}
