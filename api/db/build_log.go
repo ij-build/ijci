@@ -15,7 +15,7 @@ type BuildLog struct {
 	Name       string     `db:"name" json:"name"`
 	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
 	UploadedAt *time.Time `db:"uploaded_at" json:"uploaded_at"`
-	Content    *string    `db:"content"` // TODO - carreful when this is fetched
+	Content    *string    `db:"content" json:"content"` // TODO - careful when this is fetched
 }
 
 func GetBuildLogs(db *pgutil.LoggingDB, buildID uuid.UUID) ([]*BuildLog, error) {
