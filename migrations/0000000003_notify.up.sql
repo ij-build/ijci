@@ -6,9 +6,9 @@ declare
     notification json;
 begin
     if (tg_op = 'DELETE') then
-        data = row_to_json(OLD);
+        data = to_jsonb(OLD) - 'content';
     else
-        data = row_to_json(new);
+        data = to_jsonb(NEW) - 'content';
     end if;
 
     notification = json_build_object(
